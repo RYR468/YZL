@@ -1,0 +1,2 @@
+RYR = "hello"
+print(RYR)

@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>益志领 · 导师匹配系统</title>
+<style>
+  /* ============ 设计 Token：温润公益 · 精英赋能 ============ */
+  :root{
+    --bg:#FAF8F3; --card:#FFFFFF; --panel:#F4EFE4; --panel2:#FBF7EE;
+    --ink:#1F2A2E; --muted:#5E6B6A; --line:#E7DFCF;
+    --brand:#2E6B5E; --brand2:#214F60; --brand-l:#3A8275; --brand-bg:#EAF2EF;
+    --gold:#C9A227; --gold-d:#8A6D1F; --gold-bg:#FBF3D9;
+    --good:#2E8B57; --warn:#B9791A; --bad:#BE5439; --bar:#2E6B5E;
+    --shadow:0 10px 30px rgba(31,46,40,.08); --shadow-sm:0 4px 14px rgba(31,46,40,.06);
+    --serif:"Noto Serif SC","Source Han Serif SC","Songti SC","STSong","SimSun",serif;
+    --sans:"Microsoft YaHei","PingFang SC","Noto Sans SC",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--sans);font-size:14px;background:var(--bg);color:var(--ink);line-height:1.55;}
+  ::selection{background:var(--gold-bg);color:var(--ink);}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:#cdd6cf;border-radius:8px;border:2px solid var(--bg);}
+  ::-webkit-scrollbar-thumb:hover{background:#aab6ad;}
+
+  .ic{width:18px;height:18px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;}
+  .ic.sm{width:15px;height:15px;vertical-align:-2px;}
+  .logo{width:30px;height:30px;stroke:var(--gold);stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.18));}
+  .spin{animation:spin .8s linear infinite;transform-origin:50% 50%;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .muted{color:var(--muted);}
+  .view[hidden]{display:none !important;}
+
+  /* ============ Header ============ */
+  header{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;padding:16px 28px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 22px rgba(33,79,96,.22);border-bottom:2px solid rgba(201,162,39,.55);}
+  header .brand-txt h1{font-family:var(--serif);font-size:21px;margin:0;font-weight:700;letter-spacing:1px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+  header .brand-txt h1 .en{font-family:var(--sans);font-size:11px;font-weight:500;letter-spacing:2px;opacity:.7;}
+  header .sub{font-size:12.5px;opacity:.88;margin-top:1px;}
+  header .right{margin-left:auto;display:flex;gap:8px;align-items:center;flex-shrink:0;}
+  .badge{font-size:12px;padding:5px 13px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);font-weight:500;}
+  .badge.ok{background:rgba(46,139,87,.28);border-color:rgba(180,230,200,.4);}
+  .badge.warn{background:rgba(201,162,39,.28);border-color:rgba(230,215,160,.45);}
+  .nav-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 14px;border-radius:999px;font-size:12.5px;cursor:pointer;transition:.15s;font-family:var(--sans);font-weight:600;}
+  .nav-btn:hover{background:rgba(255,255,255,.3);}
+  .nav-btn .ic{color:#fff;}
+
+  /* ============ 工作台布局 ============ */
+  .layout{display:grid;grid-template-columns:320px 1fr;gap:22px;padding:22px 28px 12px;max-width:1440px;margin:0 auto;}
+  /* 左侧栏:权重 + 招募审核,锁定侧边(滚动主区时不动);权重常驻顶部,审核列表在剩余空间内滚动 */
+  aside{position:sticky;top:16px;align-self:start;height:calc(100vh - 32px);display:flex;flex-direction:column;gap:18px;overflow:hidden;}
+  aside .panel{padding:clamp(14px,1.8vh,20px);}
+  aside .panel h2{font-size:clamp(15px,1.9vh,17px);margin-bottom:clamp(8px,1.3vh,14px);}
+  aside .panel:first-child{flex-shrink:0;}
+  #recruit-review-panel{flex:1;min-height:0;display:flex;flex-direction:column;}
+  #recruit-review-panel h2{flex-shrink:0;}
+  #applicants-list{flex:1;overflow-y:auto;padding-right:4px;}
+  .badge-pend{display:inline-block;background:var(--bad);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px;font-family:var(--sans);}
+  .batch-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:12.5px;}
+  .batch-bar label{display:flex;align-items:center;gap:5px;cursor:pointer;color:var(--ink);}
+  .batch-bar .batch-btns{margin-left:auto;display:flex;gap:6px;}
+  @media(max-width:900px){.layout{grid-template-columns:1fr;padding:16px;} aside{position:static;height:auto;max-height:none;} header{flex-wrap:wrap;} header .right{margin-left:0;}}
+
+  /* ============ 面板 / 卡片 ============ */
+  .panel{background:var(--card);border-radius:16px;box-shadow:var(--shadow-sm);border:1px solid var(--line);padding:18px 20px;margin-bottom:18px;}
+  .panel h2{font-size:15px;margin:0 0 14px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:8px;}
+  .panel h2 .ic{color:var(--brand);}
+  .panel h2 .hint{font-size:12px;color:var(--muted);font-weight:400;margin-left:auto;}
+
+  .src-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+  .src-row label{font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 10px;border-radius:8px;transition:.15s;}
+  .src-row label:hover{background:var(--panel2);}
+  .src-row input[type=radio]{accent-color:var(--brand);width:15px;height:15px;}
+  .src-info{font-size:12.5px;color:var(--muted);margin:6px 0 10px;}
+
+  /* 权重预设 + 滑块 */
+  .preset-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:clamp(8px,1.3vh,14px);}
+  .preset{font-size:12.5px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;transition:.15s;font-family:var(--sans);}
+  .preset:hover{border-color:var(--brand-l);color:var(--brand);}
+  .preset.active{background:var(--brand);color:#fff;border-color:var(--brand);box-shadow:0 3px 10px rgba(46,107,94,.25);}
+  .slider-row{display:grid;grid-template-columns:84px 1fr 46px;align-items:center;gap:11px;margin-bottom:clamp(6px,1.3vh,14px);}
+  .slider-row label{font-size:13.5px;color:var(--ink);}
+  .slider-row input[type=range]{width:100%;height:8px;cursor:pointer;background:transparent;}
+  .slider-row .val{font-size:clamp(13px,1.6vh,15px);text-align:right;color:var(--brand);font-weight:700;font-family:var(--serif);}
+  input[type=range]{-webkit-appearance:none;appearance:none;}
+  input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:999px;background:var(--panel);}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-5px;border-radius:50%;background:#fff;border:3px solid var(--brand);box-shadow:0 2px 5px rgba(31,46,40,.2);cursor:pointer;transition:.15s;}
+  input[type=range]:hover::-webkit-slider-thumb{border-color:var(--gold);transform:scale(1.1);}
+  input[type=range]::-moz-range-track{height:8px;border-radius:999px;background:var(--panel);}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid var(--brand);box-shadow:0 2px 5px rgba(31,46,40,.2);cursor:pointer;}
+  input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid var(--gold);outline-offset:3px;}
+
+  /* ============ 按钮 ============ */
+  .btn{border:none;border-radius:10px;padding:9px 16px;font-size:13px;cursor:pointer;background:var(--brand);color:#fff;font-weight:600;transition:.18s;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--sans);}
+  .btn:hover{background:var(--brand-l);}
+  .btn:active{transform:translateY(1px);}
+  .btn[disabled]{opacity:.65;cursor:wait;}
+  .btn.ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);}
+  .btn.ghost:hover{background:var(--panel2);border-color:#d8cfb8;}
+  .btn.ghost[disabled]{background:var(--panel2);}
+  .btn.small{padding:6px 12px;font-size:12px;border-radius:8px;}
+  .btn.link{background:none;color:var(--brand);padding:0;font-weight:500;text-decoration:none;border-bottom:1px solid transparent;}
+  .btn.link:hover{color:var(--brand2);border-bottom-color:var(--brand-l);}
+  .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .feishu-msg{font-size:13px;margin-bottom:10px;color:var(--ink);}
+  label.btn.ghost.small{cursor:pointer;}
+
+  /* ============ 工具栏 ============ */
+  .toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+  .toolbar select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff;color:var(--ink);min-width:180px;font-family:var(--sans);cursor:pointer;}
+  .toolbar select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg);}
+  .toolbar label{font-size:13px;color:var(--muted);}
+  #student-info{background:var(--panel2);border:1px dashed var(--line);border-radius:12px;padding:12px 16px;margin:14px 0 0;font-size:13px;color:#414c4b;}
+  #student-info b{color:var(--brand2);font-family:var(--serif);}
+  #filtered-note{font-size:12.5px;color:var(--muted);margin:6px 2px 14px;}
+  /* 筛选条 */
+  .filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:14px;}
+  .fb-label{font-size:13px;font-weight:700;color:var(--brand2);font-family:var(--serif);}
+  .fb-levels{display:flex;gap:5px;}
+  .fb-chip{font-size:12px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:.15s;font-family:var(--serif);font-weight:700;}
+  .fb-chip:hover{border-color:var(--brand-l);}
+  .fb-chip.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .fb-select{padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fff;color:var(--ink);cursor:pointer;font-family:var(--sans);}
+  .fb-select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg);}
+  .fb-switch{font-size:13px;display:flex;align-items:center;gap:5px;cursor:pointer;color:var(--ink);}
+  .fb-switch input{accent-color:var(--brand);width:15px;height:15px;}
+  .fb-count{font-size:12px;margin-left:4px;font-family:var(--serif);color:var(--brand);}
+  /* 招募审核卡片 */
+  .app-card{position:relative;border:1px solid var(--line);border-radius:12px;padding:12px 14px 12px 36px;margin-bottom:10px;background:var(--card);}
+  .app-card .app-cb{position:absolute;left:12px;top:15px;accent-color:var(--brand);width:16px;height:16px;}
+  .app-card.app-approved{border-color:#bfe3ce;background:#f6fbf8;}
+  .app-card.app-rejected{opacity:.6;border-color:#e8c4b8;background:#fbf0ec;}
+  .app-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .app-name{font-family:var(--serif);font-size:15px;font-weight:700;}
+  .app-meta{font-size:12px;color:var(--muted);margin-top:5px;}
+  .app-reason{font-size:12px;color:#4a5160;margin-top:4px;line-height:1.5;}
+  .app-foot{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:8px;flex-wrap:wrap;}
+  .app-actions{display:flex;gap:6px;}
+.done-toggle{margin:6px 0 2px;padding:8px 11px;background:var(--panel2);border:1px dashed var(--line);border-radius:9px;font-size:12.5px;color:var(--muted);cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px;}
+.done-toggle:hover{color:var(--brand2);border-color:var(--brand);background:var(--brand-bg);}
+.done-toggle .dt-cnt{margin-left:auto;font-family:var(--serif);color:var(--brand);}
+.pw-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0;}
+.pw-grid label{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px;}
+.pw-grid input{padding:8px 11px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;background:#fff;color:var(--ink);font-family:var(--sans);}
+.pw-grid input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg);}
+
+  /* ============ 分区标题 ============ */
+  .section-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--brand2);margin:6px 2px 12px;letter-spacing:.5px;}
+  .section-title .ic{color:var(--gold);}
+  .section-title.muted-title{color:var(--muted);}
+  .section-title.muted-title .ic{color:var(--muted);}
+  .section-title .cnt{font-family:var(--serif);font-size:13px;color:var(--brand);background:var(--brand-bg);padding:1px 9px;border-radius:999px;font-weight:700;}
+  .section-title.muted-title .cnt{color:var(--muted);background:var(--panel);}
+  .section-title .line-flex{flex:1;height:1px;background:var(--line);margin-left:6px;}
+
+  /* ============ 匹配结果卡片（可点） ============ */
+  .card{background:var(--card);border-radius:16px;box-shadow:var(--shadow-sm);padding:18px 20px;margin-bottom:14px;border:1px solid var(--line);transition:.18s;cursor:pointer;position:relative;}
+  .card:hover{box-shadow:var(--shadow);transform:translateY(-1px);border-color:#dcd2bd;}
+  .card:focus-visible{outline:2px solid var(--gold);outline-offset:3px;}
+  .card-head{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+  .rank{font-size:22px;width:42px;text-align:center;font-family:var(--serif);line-height:1;}
+  .mentor-name{font-size:18px;font-weight:700;font-family:var(--serif);color:var(--ink);letter-spacing:.5px;}
+  .mentor-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+  .chip{font-size:11px;padding:2px 9px;border-radius:999px;background:var(--panel);color:#5a6275;margin-left:6px;font-weight:500;display:inline-block;}
+  .chip.warn{background:var(--gold-bg);color:var(--warn);}
+  .chip.star{background:var(--gold-bg);color:var(--gold-d);font-weight:700;letter-spacing:1px;}
+  .total{margin-left:auto;text-align:right;}
+  .total .num{font-size:28px;font-weight:800;font-family:var(--serif);line-height:1;}
+  .total .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+  .go{color:var(--muted);font-size:20px;margin-left:10px;flex-shrink:0;}
+
+  .dims{display:grid;gap:7px;margin-bottom:12px;}
+  .dim{display:grid;grid-template-columns:78px 1fr 34px;align-items:center;gap:10px;font-size:12px;}
+  .dim .track{height:8px;background:var(--panel);border-radius:999px;overflow:hidden;}
+  .dim .fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--gold));border-radius:999px;}
+  .dim .v{text-align:right;color:var(--muted);font-family:var(--serif);}
+  .reason{background:var(--panel2);border-left:3px solid var(--brand);padding:11px 14px;border-radius:0 10px 10px 0;font-size:13px;line-height:1.65;color:#3c4644;}
+  .card-foot{display:flex;align-items:center;gap:12px;margin-top:11px;}
+  .work-tabs{display:flex;gap:8px;margin-bottom:14px;}
+  .wtab{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 16px;border-radius:10px;font-size:13px;cursor:pointer;font-weight:600;font-family:var(--sans);transition:.15s;display:inline-flex;align-items:center;gap:5px;}
+  .wtab .ic{color:var(--muted);}
+  .wtab:hover{border-color:var(--brand-l);}
+  .wtab.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+  .wtab.active .ic{color:#fff;}
+  .empty{text-align:center;color:var(--muted);padding:42px 20px;font-size:13.5px;}
+
+  /* ============ 其他可用导师 行（可点） ============ */
+  .other-row{display:flex;align-items:center;gap:12px;padding:11px 16px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:8px;cursor:pointer;transition:.15s;}
+  .other-row:hover{background:var(--panel2);border-color:#d8cfb8;transform:translateX(2px);}
+  .other-row:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .other-row .o-name{font-family:var(--serif);font-size:15px;}
+  .other-row .o-main{min-width:120px;}
+  .other-row .o-qual{flex:1;font-size:12px;}
+  .other-row .o-hours{font-family:var(--serif);font-size:16px;color:var(--brand2);font-weight:700;}
+  .other-row .o-hours small{font-size:11px;color:var(--muted);font-weight:400;margin-left:2px;}
+  @media(max-width:720px){.other-row .o-qual{display:none;}}
+
+  /* ============ Modal 通用 ============ */
+  .modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-bg{position:absolute;inset:0;background:rgba(20,33,30,.55);backdrop-filter:blur(2px);}
+  .modal-box{position:relative;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.32);}
+  .modal-close{position:absolute;top:12px;right:14px;z-index:2;background:#fff;border:1px solid var(--line);font-size:16px;cursor:pointer;border-radius:50%;width:36px;height:36px;color:var(--ink);box-shadow:var(--shadow-sm);transition:.15s;display:flex;align-items:center;justify-content:center;}
+  .modal-close:hover{background:var(--panel);color:var(--bad);}
+
+  #cert-modal{z-index:120;}
+  #cert-modal .modal-box{width:92%;max-width:920px;height:92%;}
+  #cert-frame{width:100%;height:100%;border:none;}
+
+  #mentor-modal{z-index:95;}
+  #mentor-modal .modal-box{width:100%;max-width:620px;max-height:88vh;display:flex;flex-direction:column;}
+  #mentor-detail{overflow:auto;}
+  .m-head{display:flex;align-items:center;gap:14px;padding:20px 56px 20px 22px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:1;}
+  .m-level{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--gold),#e0c158);color:#fff;padding:8px 14px;border-radius:11px;font-weight:700;font-size:14px;font-family:var(--serif);box-shadow:0 4px 12px rgba(201,162,39,.4);letter-spacing:1px;flex-shrink:0;}
+  .m-level .ic{color:#fff;}
+  .m-level .tip{background:rgba(255,255,255,.28);width:16px;height:16px;margin-left:2px;}
+  .m-level .tip .ic{width:11px;height:11px;color:#fff;}
+  .m-level .tip-box{left:auto;right:0;transform:none;width:300px;}
+  .m-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;font-family:var(--serif);font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .m-name{font-family:var(--serif);font-size:20px;font-weight:700;}
+  .m-sub{font-size:12.5px;margin-top:2px;}
+  .m-head .chip.star{margin-left:auto;}
+  .m-body{padding:18px 22px;}
+  .m-sec{margin-bottom:20px;}
+  .m-sec:last-child{margin-bottom:0;}
+  .m-label{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px;letter-spacing:.5px;display:flex;align-items:center;gap:8px;}
+  .m-text{font-size:14px;line-height:1.7;color:var(--ink);}
+  .m-tags{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;}
+  .m-tags .chip{margin-left:0;}
+  .m-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px;}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;}
+  .stat .num{font-family:var(--serif);font-size:22px;font-weight:800;color:var(--brand2);line-height:1.1;}
+  .stat .lbl{font-size:11px;color:var(--muted);margin-top:4px;}
+  .m-match{background:var(--brand-bg);border:1px solid #cfe2dc;border-radius:14px;padding:16px;margin-left:-4px;margin-right:-4px;}
+  .m-match .m-label{color:var(--brand2);}
+  .m-score{font-family:var(--serif);font-size:20px;font-weight:800;margin-left:auto;}
+  .m-foot{padding:14px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:#fff;}
+  .m-edit{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  @media(max-width:520px){.m-edit{grid-template-columns:1fr;}}
+  .m-edit label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px;font-weight:400;margin:0;}
+  .m-edit input,.m-edit select{padding:6px 9px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fff;color:var(--ink);font-family:var(--sans);}
+  .m-edit input:focus,.m-edit select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg);}
+  .m-edit-warn{font-size:12px;color:var(--warn);background:var(--gold-bg);padding:7px 10px;border-radius:8px;margin:6px 0 10px;}
+
+  /* ============ 数据与集成 子页面 ============ */
+  .settings-wrap{max-width:860px;margin:0 auto;padding:24px 28px 44px;}
+  .settings-head{display:flex;align-items:center;gap:14px;margin-bottom:22px;}
+  .settings-head h2{font-family:var(--serif);font-size:24px;margin:0;font-weight:700;color:var(--ink);}
+  .settings-head .sub{font-size:13px;color:var(--muted);margin-top:2px;}
+  .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;}
+  .settings-grid .panel{margin-bottom:0;}
+  .settings-grid .full{grid-column:1/-1;}
+  @media(max-width:760px){.settings-grid{grid-template-columns:1fr;}}
+
+  /* ============ 导师招募报名 ============ */
+  .recruit-wrap{max-width:880px;margin:0 auto;padding:24px 28px 44px;}
+  .recruit-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .recruit-head h2{font-family:var(--serif);font-size:24px;margin:0;font-weight:700;}
+  .recruit-head .sub{font-size:13px;color:var(--muted);margin-top:2px;}
+  .recruit-hint{font-size:12.5px;color:var(--muted);background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:10px 13px;margin-bottom:14px;line-height:1.7;}
+  .recruit-hint b{color:var(--brand2);}
+  .recruit-form{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:var(--shadow-sm);}
+  .recruit-form fieldset{border:none;padding:0;margin:0 0 20px;}
+  .recruit-form legend{font-size:14px;font-weight:700;color:var(--brand2);font-family:var(--serif);margin-bottom:12px;padding:0;display:flex;align-items:center;gap:6px;}
+  .recruit-form legend .ic{color:var(--gold);}
+  .recruit-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+  @media(max-width:680px){.recruit-grid{grid-template-columns:1fr;}}
+  .fld{display:flex;flex-direction:column;gap:4px;}
+  .fld label{font-size:12.5px;color:var(--muted);}
+  .fld label .req{color:var(--bad);}
+  .fld input,.fld select,.fld textarea{padding:8px 11px;border:1px solid var(--line);border-radius:9px;font-size:13.5px;background:#fff;color:var(--ink);font-family:var(--sans);}
+  .fld input:focus,.fld select:focus,.fld textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg);}
+  .fld.full{grid-column:1/-1;}
+  .recruit-actions{display:flex;gap:10px;align-items:center;margin-top:4px;}
+  .rr-card{border-radius:14px;padding:16px 18px;margin-top:18px;border:1px solid var(--line);background:var(--card);}
+  .rr-card.rr-pass{border-color:#bfe3ce;background:#f0f8f3;}
+  .rr-card.rr-review{border-color:#e8d6ad;background:#fbf6e8;}
+  .rr-card.rr-reject{border-color:#e8c4b8;background:#fbf0ec;}
+  .rr-title{font-size:16px;font-weight:700;font-family:var(--serif);}
+  .rr-pass .rr-title{color:var(--good);} .rr-review .rr-title{color:var(--warn);} .rr-reject .rr-title{color:var(--bad);}
+  .rr-id{font-size:13px;color:var(--muted);margin-top:4px;}
+  .rr-id b{color:var(--brand2);font-family:var(--serif);}
+  .rr-reasons{margin:10px 0 0;padding-left:18px;font-size:13px;line-height:1.8;color:var(--ink);}
+  .rr-missing{font-size:13px;color:var(--warn);margin-top:8px;font-weight:600;}
+  .rr-tip{font-size:12.5px;color:var(--brand);margin-top:10px;background:var(--brand-bg);padding:8px 12px;border-radius:8px;}
+
+  /* ============ Tip ============ */
+  .tip{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:help;color:#fff;background:var(--brand);width:18px;height:18px;border-radius:50%;margin-left:6px;font-size:11px;flex-shrink:0;}
+  .tip .ic{width:11px;height:11px;color:#fff;vertical-align:0;}
+  .tip-box{display:none;position:absolute;top:130%;left:50%;transform:translateX(-50%);background:var(--brand2);color:#fff;padding:13px 16px;border-radius:12px;font-size:12px;line-height:1.9;font-weight:400;width:320px;z-index:30;box-shadow:0 10px 30px rgba(0,0,0,.22);}
+  .tip:hover .tip-box{display:block;}
+  .tip-box b{color:var(--gold);font-family:var(--serif);}
+  .tip-box .dim{color:#c8d4d1;display:block;width:auto;gap:0;}
+
+  /* ============ Toast ============ */
+  #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--brand2);color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;box-shadow:0 10px 30px rgba(0,0,0,.22);max-width:80%;z-index:200;}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+  #toast.ok{background:var(--good);} #toast.err{background:var(--bad);}
+
+  footer{max-width:1440px;margin:0 auto;padding:10px 28px 26px;text-align:center;font-size:12px;color:var(--muted);}
+  footer b{color:var(--brand);font-family:var(--serif);}
+
+  a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+  .btn:focus-visible{outline-offset:3px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+</head>
+<body>
+<header>
+  <svg class="logo" viewBox="0 0 24 24"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></svg>
+  <div class="brand-txt"><h1>益志领 · 导师智能匹配 <span class="en">YL MENTOR MATCH</span></h1><div class="sub">拖动滑块实时调权重，结果即时刷新 · 让每一份善意都被温暖传递</div></div>
+  <div class="right">
+    <span class="badge" id="data-badge">数据：—</span>
+    <span class="badge warn" id="feishu-badge">飞书：—</span>
+    <span class="badge" id="review-badge" style="display:none;cursor:pointer;background:var(--bad);color:#fff;" onclick="document.getElementById('recruit-review-panel').scrollIntoView({behavior:'smooth',block:'start'})">审核 0</span>
+    <a class="nav-btn" href="/logout" title="登出" aria-label="登出"><svg class="ic sm" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> 登出</a>
+    <button class="nav-btn" id="nav-toggle" aria-label="切换数据与集成">
+      <svg class="ic sm nav-go-set" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <svg class="ic sm nav-go-work" viewBox="0 0 24 24" hidden><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      <span id="nav-label">数据与集成</span>
+    </button>
+  </div>
+</header>
+
+<!-- ========== 工作台视图（主界面，仅权重调节 + 匹配工作台） ========== -->
+<div id="view-work" class="view">
+<div class="layout">
+  <aside>
+    <section class="panel">
+      <h2><svg class="ic" viewBox="0 0 24 24"><path d="M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg> 权重调节 <span class="hint">预设或手调</span></h2>
+      <div id="preset-bar" class="preset-bar"></div>
+      <div id="sliders"></div>
+      <div style="margin-top:6px;"><button class="btn ghost small" id="reset-weights">恢复默认</button>
+        <span class="hint" style="font-size:12px;color:var(--muted);">总和：<b id="weight-sum">100</b></span></div>
+    </section>
+
+    <section class="panel" id="recruit-review-panel">
+      <h2><svg class="ic" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> 招募审核 <span class="badge-pend" id="pend-badge" style="display:none">0</span></h2>
+      <div id="applicants-list"><div class="empty">加载中…</div></div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="work-tabs">
+      <button class="wtab active" data-w="match">导师匹配</button>
+      <button class="wtab" data-w="course">课程表</button>
+      <button class="wtab" data-w="activity">活动通知</button>
+    </div>
+    <div id="w-match">
+    <div class="panel" style="padding:14px 18px;">
+      <div class="toolbar">
+        <label>选择学生</label><select id="student-select"></select>
+        <label>返回前</label><select id="topn-select" style="min-width:70px;"><option>3</option><option selected>5</option><option>8</option></select><label>名导师</label>
+        <button class="btn small" id="write-feishu" style="margin-left:auto;"><svg class="ic sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> 导出数据</button>
+        <a id="last-match-link" target="_blank" class="btn link small" style="display:none;">打开导出的表 ↗</a>
+      </div>
+      <div id="student-info"></div>
+    </div>
+    <div id="filter-bar" class="filter-bar">
+      <span class="fb-label">筛选</span>
+      <div class="fb-levels" id="fb-levels"></div>
+      <select id="fb-industry" class="fb-select" aria-label="行业"></select>
+      <select id="fb-city" class="fb-select" aria-label="城市"></select>
+      <select id="fb-tag" class="fb-select" aria-label="标签"></select>
+      <label class="fb-switch"><input type="checkbox" id="fb-free"> 仅看有余量</label>
+      <span class="fb-count muted" id="fb-count"></span>
+      <button class="btn link small" id="fb-clear" style="margin-left:auto;">清除筛选</button>
+    </div>
+    <div id="filtered-note"></div>
+    <div id="results"><div class="empty">加载中…</div></div>
+    </div>
+
+    <div id="w-course" hidden>
+      <div class="panel">
+        <h2><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 课程表 · 导师-学生交流安排 <span class="hint" id="sched-count"></span></h2>
+        <div class="recruit-hint" style="font-size:12.5px;color:var(--muted);background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px;">新增安排后自动飞书通知导师与学生(需双方已绑定飞书手机号)。</div>
+        <div class="m-edit" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:12px 0;">
+          <label>导师<select id="sc-mentor"></select></label>
+          <label>学生<select id="sc-student"></select></label>
+          <label>时间<input id="sc-time" type="datetime-local"></label>
+          <label>主题<input id="sc-topic" list="dl-topic" placeholder="选择或输入"></label>
+          <datalist id="dl-topic"><option>职业规划初次沟通</option><option>面试技巧辅导</option><option>行业入门介绍</option><option>学业规划</option><option>心理减压</option><option>简历修改</option><option>价值观引导</option><option>学习方法指导</option></datalist>
+          <label>形式<select id="sc-mode"><option>线上</option><option>线下</option></select></label>
+        </div>
+        <button type="button" class="btn small" id="sc-add">+ 安排并通知师生</button>
+        <div id="sched-list" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <div id="w-activity" hidden>
+      <div class="panel">
+        <h2><svg class="ic" viewBox="0 0 24 24"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg> 活动通知 · 发布到大群</h2>
+        <div class="recruit-hint" style="font-size:12.5px;color:var(--muted);background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px;">填写活动信息,发布后发送到飞书大群(需在 config/feishu.json 配 group_chat_id)。</div>
+        <div class="m-edit" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin:12px 0;">
+          <label>活动标题<input id="ac-title" list="dl-act" placeholder="选择或输入"></label>
+          <datalist id="dl-act"><option>暑期公益营</option><option>导师交流沙龙</option><option>企业参访</option><option>线上分享会</option><option>年终答谢会</option><option>新生见面会</option><option>主题工作坊</option></datalist>
+          <label>时间<input id="ac-time" type="datetime-local"></label>
+          <label>地点<input id="ac-loc" list="dl-loc" placeholder="选择或输入"></label>
+          <datalist id="dl-loc"><option>线上</option><option>上海</option><option>北京</option><option>成都</option><option>广州</option><option>杭州</option><option>深圳</option></datalist>
+          <label class="full">内容<input id="ac-content" placeholder="活动详情..."></label>
+        </div>
+        <button type="button" class="btn small" id="ac-add">发布到大群</button>
+        <div id="act-list" style="margin-top:14px;"></div>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+
+<!-- ========== 数据与集成 子页面 ========== -->
+<div id="view-settings" class="view" hidden>
+<div class="settings-wrap">
+  <div class="settings-head">
+    <div>
+      <h2>数据与集成</h2>
+      <div class="sub">数据源切换、CSV 导入、飞书连接等管理功能。日常匹配请返回工作台。</div>
+    </div>
+    <button class="btn ghost small" id="back-work" style="margin-left:auto;"><svg class="ic sm" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> 返回工作台</button>
+  </div>
+  <div class="settings-grid">
+    <section class="panel">
+      <h2><svg class="ic" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg> 数据源</h2>
+      <div class="src-row">
+        <label><input type="radio" name="src" value="local"> 本地 mock</label>
+        <label><input type="radio" name="src" value="feishu"> 飞书实时</label>
+        <label><input type="radio" name="src" value="imported"> 导入文件</label>
+      </div>
+      <div class="src-info" id="src-info">—</div>
+      <button class="btn ghost small" id="refresh-btn"><svg class="ic sm" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg> 刷新当前数据源</button>
+    </section>
+
+    <section class="panel">
+      <h2><svg class="ic" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> 飞书连接</h2>
+      <div class="feishu-msg" id="fs-msg">—</div>
+      <button class="btn small" id="fs-test">测试连接</button>
+      <div class="hint" style="font-size:11px;color:var(--muted);margin-top:8px;">凭证存在本地 config/feishu.json。</div>
+    </section>
+
+    <section class="panel full">
+      <h2><svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> 导入数据（CSV）</h2>
+      <div class="hint" style="font-size:12px;color:var(--muted);margin-bottom:10px;">中文表头，与模板同格式。导入后自动切到「导入文件」数据源。</div>
+      <div class="row">
+        <label class="btn ghost small">＋ 导师表<input type="file" accept=".csv" id="imp-mentor" hidden></label>
+        <label class="btn ghost small">＋ 学生表<input type="file" accept=".csv" id="imp-student" hidden></label>
+      </div>
+      <div class="src-info" id="imp-info">未导入</div>
+      <div class="row" style="margin-top:6px;">
+        <a class="btn link small" href="/api/template/mentor" download>下载导师表模板</a>
+        <a class="btn link small" href="/api/template/student" download>下载学生表模板</a>
+      </div>
+    </section>
+
+
+    <section class="panel full">
+      <h2><svg class="ic" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg> 飞书多维表格</h2>
+      <div class="hint" style="font-size:12px;color:var(--muted);margin-bottom:10px;">直接打开飞书多维表格编辑 / 浏览数据(需有文档访问权限,新窗口打开)。</div>
+      <div class="row" id="fs-links"><div class="empty">加载中…</div></div>
+    </section>
+
+    <section class="panel full">
+      <h2><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> 安全设置 · 修改密码</h2>
+      <div class="hint" style="font-size:12px;color:var(--muted);margin-bottom:10px;">「登录密码」用于管理端登录;「二级密码」用于审核(招募 / 证书 / 配对 / 课程 / 活动)。两者<b>可不同</b>。修改需先输入当前密码确认身份。</div>
+      <div class="pw-grid">
+        <label>当前密码 <span class="req">*</span><input type="password" id="pw-current" placeholder="输入当前登录密码"></label>
+        <label>新登录密码<input type="password" id="pw-new" placeholder="留空表示不修改"></label>
+        <label>新二级密码<input type="password" id="pw-new-audit" placeholder="留空表示不修改"></label>
+      </div>
+      <button class="btn small" id="pw-save"><svg class="ic sm" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 保存修改</button>
+    </section>
+  </div>
+</div>
+</div>
+
+<!-- ========== 导师招募报名视图 ========== -->
+<div id="view-recruit" class="view" hidden>
+<div class="recruit-wrap">
+  <div class="recruit-head">
+    <div>
+      <h2>导师招募 · 自助报名</h2>
+      <div class="sub">填写信息后系统按招募硬标准(名校 / 500强 / 资深专家)自动初筛,通过即入库。</div>
+    </div>
+    <button class="btn ghost small" id="back-work2" style="margin-left:auto;"><svg class="ic sm" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> 返回工作台</button>
+  </div>
+  <div class="recruit-hint">招募硬标准:全球 <b>Top100 院校</b>毕业 <b>或</b> 世界<b>500强</b>中高层 <b>或</b> 优秀创业者。带 <span style="color:var(--bad)">*</span> 为必填;「资质类型 / 毕业院校」至少填一项用于初筛。</div>
+  <form id="recruit-form" class="recruit-form">
+    <fieldset>
+      <legend><svg class="ic sm" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M3 21v-1a6 6 0 0 1 12 0v1"/></svg> 基本信息</legend>
+      <div class="recruit-grid">
+        <div class="fld"><label>导师编号(留空自动生成)</label><input name="导师ID" placeholder="如 R001,留空自动分配"></div>
+        <div class="fld"><label>性别 <span class="req">*</span></label><select name="性别"><option value="">请选择</option><option>男</option><option>女</option></select></div>
+        <div class="fld"><label>常住城市 <span class="req">*</span></label><input name="常住城市" placeholder="如 上海"></div>
+        <div class="fld"><label>行业 <span class="req">*</span></label><input name="行业" placeholder="如 金融 / 科技 / 教育"></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend><svg class="ic sm" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> 资质背景(初筛关键)</legend>
+      <div class="recruit-grid">
+        <div class="fld full"><label>资质类型</label><input name="资质类型" placeholder="如 世界500强中层管理 / 全球前100院校毕业 / 优秀创业者 / 资深总监"></div>
+        <div class="fld"><label>毕业院校</label><input name="毕业院校" placeholder="如 复旦大学"></div>
+        <div class="fld"><label>工作年限</label><input name="工作年限" type="number" min="0" placeholder="如 12"></div>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend><svg class="ic sm" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></svg> 辅导意愿</legend>
+      <div class="recruit-grid">
+        <div class="fld"><label>专精领域</label><input name="专精领域" placeholder="顿号分隔,如 投资、风险管理"></div>
+        <div class="fld"><label>期望辅导区域</label><input name="期望辅导区域" placeholder="如 华东 / 不限"></div>
+        <div class="fld"><label>每月可用时长(小时)</label><input name="每月可用时长" type="number" min="0" placeholder="如 8"></div>
+        <div class="fld"><label>可同时辅导人数</label><input name="可同时辅导人数" type="number" min="1" placeholder="如 3"></div>
+        <div class="fld"><label>擅长授课主题</label><input name="擅长授课主题" placeholder="如 职业规划、行业入门"></div>
+        <div class="fld"><label>期望学员性别</label><select name="期望学员性别"><option value="">不限</option><option>男</option><option>女</option></select></div>
+        <div class="fld full"><label>可提供服务</label><input name="可提供服务" placeholder="如 线上沟通、线下活动、公益营授课"></div>
+      </div>
+    </fieldset>
+    <div class="recruit-actions">
+      <button type="submit" class="btn" id="recruit-submit"><svg class="ic sm" viewBox="0 0 24 24"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-2z"/></svg> 提交报名 · AI 初筛</button>
+      <button type="button" class="btn ghost small" id="recruit-reset">清空表单</button>
+    </div>
+  </form>
+  <div id="recruit-result"></div>
+</div>
+</div>
+
+<!-- 证书 Modal -->
+<div id="cert-modal" class="modal"><div class="modal-bg" onclick="closeCert()"></div><div class="modal-box"><button class="modal-close" onclick="closeCert()" aria-label="关闭">✕</button><iframe id="cert-frame" title="荣誉证书"></iframe></div></div>
+<div id="busy-overlay" style="display:none;position:fixed;inset:0;background:rgba(31,46,40,.32);z-index:300;align-items:center;justify-content:center;"><div style="background:#fff;border-radius:14px;padding:20px 28px;display:flex;align-items:center;gap:12px;box-shadow:0 12px 36px rgba(0,0,0,.18);"><svg class="spin" style="width:26px;height:26px;color:var(--brand);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg><span style="font-size:14px;color:var(--ink);font-weight:600;">处理中…</span></div></div>
+<!-- 导师详情 Modal -->
+<div id="mentor-modal" class="modal"><div class="modal-bg" onclick="closeMentorDetail()"></div><div class="modal-box"><button class="modal-close" onclick="closeMentorDetail()" aria-label="关闭">✕</button><div id="mentor-detail"></div></div></div>
+<!-- 二级密码确认 Modal -->
+<div id="audit-modal" class="modal"><div class="modal-bg" onclick="closeAuditModal()"></div><div class="modal-box" style="width:100%;max-width:380px;padding:28px 26px;"><button class="modal-close" onclick="closeAuditModal()" aria-label="关闭">✕</button><div style="text-align:center;"><svg style="width:36px;height:36px;stroke:var(--gold);stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;margin-bottom:8px;" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><path d="M12 15v3"/></svg><h3 style="font-family:var(--serif);font-size:19px;margin:0 0 4px;color:var(--brand2);">二级密码确认</h3><div class="muted" style="font-size:13px;margin:0 0 18px;" id="audit-desc">即将执行审核操作</div></div><input type="password" id="audit-pw" placeholder="请输入二级密码" style="width:100%;padding:11px 14px;border:1px solid var(--line);border-radius:10px;text-align:center;letter-spacing:3px;font-size:15px;margin-bottom:10px;font-family:var(--sans);color:var(--ink);"><div id="audit-err" style="color:var(--bad);font-size:13px;text-align:center;min-height:18px;margin-bottom:12px;"></div><div style="display:flex;gap:10px;"><button class="btn ghost" type="button" onclick="closeAuditModal()" style="flex:1;">取消</button><button class="btn" type="button" id="audit-ok" style="flex:1;">确认执行</button></div></div></div>
+<div id="toast"></div>
+<footer>上海益志领公益基金会 · <b>让每一位导师的善意，都能被高效而温暖地传递</b></footer>
+
+<script>
+const state={students:[],weights:{},defaultWeights:{},dimOrder:[],dimLabels:{},topN:5,current:null,source:"local",imported:{mentors:0,students:0},mentorData:null,mentorById:{},lastMatch:null,activePreset:"balance",view:"work",filters:{levels:[],industry:"",city:"",tag:"",onlyFree:false}};
+let curView="work";
+
+const PRESETS=[
+  {key:"balance",label:"均衡"},
+  {key:"industry",label:"重行业",w:{industry:.4,need:.15,service:.1,region:.15,personality:.1,profile:.1}},
+  {key:"need",label:"重需求",w:{industry:.15,need:.4,service:.1,region:.1,personality:.15,profile:.1}},
+  {key:"region",label:"重地区",w:{industry:.15,need:.12,service:.13,region:.4,personality:.1,profile:.1}},
+  {key:"personality",label:"重性格",w:{industry:.1,need:.15,service:.1,region:.1,personality:.4,profile:.15}},
+];
+function presetWeights(key){const p=PRESETS.find(x=>x.key===key);return p&&p.w?p.w:null;}
+
+async function getJSON(url,opts){const r=await fetch(url,opts);if(r.status===401){location='/login';return new Promise(()=>{});}if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j.message||j.error||("HTTP "+r.status));}return r.json();}
+function medals(r){return ["🥇","🥈","🥉"][r-1]||("#"+r);}
+function scoreColor(v){return v>=0.66?"var(--good)":v>=0.33?"var(--warn)":"var(--bad)";}
+function toast(msg,kind){const t=document.getElementById("toast");t.textContent=msg;t.className="show "+(kind||"");clearTimeout(t._h);t._h=setTimeout(()=>{t.className=kind||"";},3400);}
+function withLoading(btn,loadingText,fn){
+  if(!btn||btn.disabled)return Promise.resolve();
+  const orig=btn.innerHTML;btn.disabled=true;
+  btn.innerHTML=`<svg class="ic sm spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></svg> ${loadingText}`;
+  return Promise.resolve(fn()).finally(()=>{btn.disabled=false;btn.innerHTML=orig;});
+}
+function busy(on){const el=document.getElementById('busy-overlay');if(el)el.style.display=on?'flex':'none';}
+async function runBusy(fn){busy(true);try{return await fn();}finally{busy(false);}}
+const LV={L3:3,L2:2,L1:1,"":0};
+function byLevelThenHours(a,b){const d=(LV[b.level]||0)-(LV[a.level]||0);return d!==0?d:(b.total_hours||0)-(a.total_hours||0);}
+
+/* 筛选 */
+function uniq(arr){return [...new Set(arr.filter(x=>x!==undefined&&x!==null&&x!==""))].sort((a,b)=>String(a).localeCompare(String(b),"zh"));}
+function fillSelect(id,all,arr,cur){const s=document.getElementById(id);const keep=cur||((s&&s.value)||"");s.innerHTML=`<option value="">${all}</option>`+arr.map(x=>`<option value="${x}">${x}</option>`).join("");s.value=(keep&&arr.includes(keep))?keep:"";}
+function buildFilterOptions(){
+  if(!state.mentorData)return;const ms=state.mentorData.mentors;
+  const levels=uniq(ms.map(m=>m.level));
+  const cur=new Set(state.filters.levels);
+  document.getElementById('fb-levels').innerHTML=levels.map(l=>`<button class="fb-chip${cur.has(l)?" active":""}" data-lv="${l}">${l}</button>`).join("");
+  document.querySelectorAll('.fb-chip').forEach(c=>c.addEventListener('click',()=>{const lv=c.dataset.lv;const s=new Set(state.filters.levels);if(s.has(lv)){s.delete(lv);c.classList.remove('active');}else{s.add(lv);c.classList.add('active');}state.filters.levels=[...s];renderUnified();}));
+  fillSelect('fb-industry','全部行业',uniq(ms.map(m=>m.industry)),state.filters.industry);
+  fillSelect('fb-city','全部城市',uniq(ms.map(m=>m.city)),state.filters.city);
+  fillSelect('fb-tag','全部标签',uniq(ms.flatMap(m=>m.tags||[])),state.filters.tag);
+}
+function passesFilter(mid){const m=state.mentorById[mid];if(!m)return true;const f=state.filters;
+  if(f.levels.length&&!f.levels.includes(m.level))return false;
+  if(f.industry&&m.industry!==f.industry)return false;
+  if(f.city&&m.city!==f.city)return false;
+  if(f.tag&&!(m.tags||[]).includes(f.tag))return false;
+  if(f.onlyFree&&!((m.free_slots||0)>0))return false;
+  return true;}
+function hasActiveFilter(){const f=state.filters;return !!(f.levels.length||f.industry||f.city||f.tag||f.onlyFree);}
+function clearFilters(){state.filters={levels:[],industry:"",city:"",tag:"",onlyFree:false};document.getElementById('fb-free').checked=false;['fb-industry','fb-city','fb-tag'].forEach(id=>{const s=document.getElementById(id);if(s)s.value="";});buildFilterOptions();renderUnified();}
+
+/* 视图切换 */
+function showView(v){
+  curView=v;
+  document.querySelectorAll('.view').forEach(el=>el.hidden = el.id !== 'view-'+v);
+  const isWork = v==="work";
+  document.querySelector('.nav-go-set').hidden = !isWork;
+  document.querySelector('.nav-go-work').hidden = isWork;
+  document.getElementById('nav-label').textContent = isWork?"数据与集成":"返回工作台";
+  if(v==='settings'&&document.getElementById('fs-links'))loadFeishuLinks();
+  window.scrollTo(0,0);
+}
+
+function buildSliders(){const box=document.getElementById("sliders");box.innerHTML="";
+  state.dimOrder.forEach(k=>{const w=state.weights[k]||0;const row=document.createElement("div");row.className="slider-row";
+    row.innerHTML=`<label>${state.dimLabels[k]||k}</label><input type="range" min="0" max="100" step="5" data-k="${k}" value="${Math.round(w*100)}"><span class="val">${Math.round(w*100)}</span>`;
+    box.appendChild(row);});
+  box.querySelectorAll("input[type=range]").forEach(el=>{el.addEventListener("input",()=>{el.nextElementSibling.textContent=el.value;state.weights[el.dataset.k]=parseInt(el.value,10)/100;
+    state.activePreset=null;refreshPresetActive();
+    document.getElementById("weight-sum").textContent=state.dimOrder.reduce((a,k)=>a+Math.round((state.weights[k]||0)*100),0);clearTimeout(window._mt);window._mt=setTimeout(refresh,200);});});
+  document.getElementById("weight-sum").textContent=state.dimOrder.reduce((a,k)=>a+Math.round((state.weights[k]||0)*100),0);}
+function buildPresets(){const bar=document.getElementById("preset-bar");bar.innerHTML=PRESETS.map(p=>`<button class="preset" data-preset="${p.key}">${p.label}</button>`).join("");
+  bar.querySelectorAll(".preset").forEach(b=>b.addEventListener("click",()=>applyPreset(b.dataset.preset)));}
+function refreshPresetActive(){document.querySelectorAll(".preset").forEach(b=>b.classList.toggle("active",b.dataset.preset===state.activePreset));}
+function applyPreset(key){const w=presetWeights(key);state.weights=w?Object.assign({},w):Object.assign({},state.defaultWeights);state.activePreset=key;buildSliders();refreshPresetActive();refresh();}
+function resetWeights(){state.weights=Object.assign({},state.defaultWeights);state.activePreset="balance";buildSliders();refreshPresetActive();refresh();}
+
+function renderStudentSelect(){const sel=document.getElementById("student-select");
+  sel.innerHTML=state.students.map(s=>`<option value="${s.student_id}">${s.student_id}（${s.grade}·${s.region}）</option>`).join("");
+  if(!state.students.find(s=>s.student_id===state.current))state.current=state.students[0]&&state.students[0].student_id;
+  sel.value=state.current||"";}
+function renderStudentInfo(s){if(!s){document.getElementById("student-info").innerHTML="";return;}
+  const f=s.interested_fields&&s.interested_fields.length?s.interested_fields.join("、"):"不限";
+  document.getElementById("student-info").innerHTML=`<b>${s.student_id}</b> · ${s.grade} · ${s.region} · ${s.gender} &nbsp;|&nbsp; 需求：<b>${(s.needs||[]).join("、")||"无"}</b> &nbsp;|&nbsp; 意向：<b>${f}</b> &nbsp;|&nbsp; 性格：${s.personality||"—"}`;}
+
+function dimBars(scores){return state.dimOrder.map(k=>{const v=(scores&&scores[k])||0;return `<div class="dim"><span>${state.dimLabels[k]||k}</span><div class="track"><div class="fill" style="width:${Math.round(v*100)}%"></div></div><span class="v">${v.toFixed(2)}</span></div>`;}).join("");}
+
+function renderUnified(){
+  const box=document.getElementById("results");const m=state.lastMatch;
+  if(!m){box.innerHTML='<div class="empty">加载中…</div>';return;}
+  renderStudentInfo(m.student);
+  const fmatch=m.matches.filter(x=>passesFilter(x.mentor_id));
+  const ids=new Set(m.matches.map(x=>x.mentor_id));
+  const othersAll=state.mentorData?state.mentorData.mentors.filter(x=>!ids.has(x.mentor_id)).sort(byLevelThenHours):[];
+  const fothers=othersAll.filter(x=>passesFilter(x.mentor_id));
+  const filtering=hasActiveFilter();
+  const totalAll=m.matches.length+othersAll.length;
+  const note=document.getElementById("filtered-note");
+  const cnt=document.getElementById("fb-count");
+  if(filtering){
+    note.textContent=`已按筛选条件过滤：匹配命中 ${fmatch.length} 位、其他可用 ${fothers.length} 位。`;
+    cnt.textContent=`${fmatch.length+fothers.length} / ${totalAll} 位`;
+  }else{
+    note.textContent=m.matches.length?`已过滤掉 ${m.filtered_out} 位不达标导师；匹配命中 ${m.matches.length} 位，其余可用导师见下方。`:"";
+    cnt.textContent=`共 ${totalAll} 位`;
+  }
+  let html="";
+  if(fmatch.length){
+    html+=`<div class="section-title"><svg class="ic sm" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3L12 3z"/></svg> 匹配导师 <span class="cnt">${fmatch.length}</span><div class="line-flex"></div></div>`;
+    html+=fmatch.map(x=>{const chip=x.free_slots<=1?`<span class="chip warn">余 ${x.free_slots}</span>`:`<span class="chip">余 ${x.free_slots}</span>`;
+      return `<div class="card" tabindex="0" role="button" onclick="openMentorDetail('${x.mentor_id}')" onkeydown="onItemKey(event,'${x.mentor_id}')"><div class="card-head"><div class="rank">${medals(x.rank)}</div><div><div class="mentor-name">${x.mentor_id}</div><div class="mentor-meta">${x.industry||"—"} · ${x.city||"—"} ${chip}</div></div><div class="total"><div class="num" style="color:${scoreColor(x.scores.total)}">${x.scores.total.toFixed(2)}</div><div class="lbl">综合得分</div></div></div><div class="dims">${dimBars(x.scores)}</div><div class="reason">💡 ${x.reason}</div><div class="card-foot"><button class="btn small" onclick="event.stopPropagation();confirmPair('${x.mentor_id}')">正式配对该学生</button><span class="muted" style="font-size:11px;">点卡片查看详情 ›</span></div></div>`;}).join("");
+  }else if(!filtering){
+    html+=`<div class="empty">没有导师通过硬过滤，试试切换权重预设、手调滑块或换一位学生。</div>`;
+  }
+  if(fothers.length){
+    html+=`<div class="section-title muted-title">其他可用导师 <span class="cnt">${fothers.length}</span><div class="line-flex"></div></div>`;
+    html+=fothers.map(x=>`<div class="other-row" tabindex="0" role="button" onclick="openMentorDetail('${x.mentor_id}')" onkeydown="onItemKey(event,'${x.mentor_id}')"><span class="chip star">${x.level||"—"}</span><div class="o-main"><b class="o-name">${x.mentor_id}</b> <span class="muted">${x.industry||"—"} · ${x.city||"—"}</span></div><div class="o-qual muted">${x.qualification||"—"}${x.school?(" · "+x.school):""}</div><div class="o-hours">${x.total_hours}<small>h</small></div><button class="btn small" onclick="event.stopPropagation();openCert('${x.mentor_id}')">📜</button><span class="go">›</span></div>`).join("");
+  }
+  if(filtering&&!fmatch.length&&!fothers.length){html=`<div class="empty">没有符合筛选条件的导师，试试放宽筛选或点「清除筛选」。</div>`;}
+  box.innerHTML=html;}
+
+function loadFeishuLinks(){
+  getJSON('/api/feishu/links').then(r=>{
+    const box=document.getElementById('fs-links');const L=r.links||{};
+    const names={mentor:'导师表',student:'学生表',match:'匹配结果表'};
+    const items=Object.keys(names).filter(k=>L[k]).map(k=>'<a class="btn ghost small" href="'+L[k]+'" target="_blank" rel="noopener">'+names[k]+' ↗</a>');
+    box.innerHTML=items.length?items.join(''):'<div class="empty">未配置飞书凭证</div>';
+  }).catch(e=>{document.getElementById('fs-links').innerHTML='<div class="empty">加载失败</div>';});
+}
+function loadApplicants(){
+  getJSON('/api/applicants').then(r=>renderApplicants(r.applicants||[]))
+    .catch(e=>{const el=document.getElementById('applicants-list');if(el)el.innerHTML='<div class="empty">加载失败：'+e.message+'</div>';});
+}
+function updateReviewBadges(pend){
+  const rb=document.getElementById('review-badge'),pb=document.getElementById('pend-badge');
+  if(rb){if(pend>0){rb.textContent='待审 '+pend;rb.style.display='inline-block';}else rb.style.display='none';}
+  if(pb){if(pend>0){pb.textContent=pend;pb.style.display='inline-block';}else pb.style.display='none';}
+}
+let _showDoneApp=false;
+function appCardHtml(a){
+  const f=a.form||{};
+  const rb={pass:'<span class="chip" style="background:#e8f5e9;color:#2e7d32">初筛通过</span>',review:'<span class="chip warn">待复核</span>',reject:'<span class="chip" style="background:#fbe9e7;color:#c62828">初筛未过</span>'}[a.result]||'';
+  const st={pending:'待审核',approved:'已通过·飞书','approved-local':'已通过·本地',rejected:'已拒绝'}[a.status]||a.status;
+  const cb=a.status==='pending'?'<input type="checkbox" class="app-cb" value="'+a.id+'">':'';
+  const act=a.status==='pending'
+    ?'<button class="btn small" onclick="doApprove(\''+a.id+'\')">✓ 通过</button><button class="btn ghost small" onclick="doReject(\''+a.id+'\')">拒绝</button>'
+    :'<span class="muted">'+st+'</span><button class="btn ghost small" onclick="deleteApplicant(\''+a.id+'\')">删除</button>';
+  return '<div class="app-card app-'+(a.status||'pending')+'">'+cb+'<div class="app-head"><b class="app-name">'+(a.mentor_id||'—')+'</b><span class="muted">'+(f['性别']||'')+' · '+(f['常住城市']||'')+' · '+(f['行业']||'')+'</span>'+rb+'</div><div class="app-meta">资质：'+(f['资质类型']||'—')+' ｜ 院校：'+(f['毕业院校']||'—')+' ｜ 工作'+(f['工作年限']||'—')+'年 ｜ 可辅导'+(f['可同时辅导人数']||'—')+'人</div>'+(a.reasons&&a.reasons.length?'<div class="app-reason">'+a.reasons.join(' · ')+'</div>':'')+'<div class="app-foot"><span class="muted">'+(a.ts||'')+' · '+a.id+'</span><span class="app-actions">'+act+'</span></div></div>';
+}
+function renderApplicants(list){
+  const box=document.getElementById('applicants-list');if(!box)return;
+  const pend=list.filter(x=>x.status==='pending');
+  const done=list.filter(x=>x.status!=='pending');
+  updateReviewBadges(pend.length);
+  if(!list.length){box.innerHTML='<div class="empty">暂无报名申请。导师在公开招募页报名后会出现在这里。</div>';return;}
+  let html='';
+  if(pend.length){
+    html+='<div class="batch-bar"><label><input type="checkbox" id="sel-all" onchange="toggleAllApp(this.checked)"><span>全选待审 '+pend.length+'</span></label><span class="batch-btns"><button class="btn small" onclick="batchAction(\'approve\')">批量通过</button><button class="btn ghost small" onclick="batchAction(\'reject\')">批量拒绝</button></span></div>';
+    html+=pend.map(a=>appCardHtml(a)).join('');
+  }else{
+    html+='<div class="empty">没有待审核的申请。</div>';
+  }
+  if(done.length){
+    html+='<div class="done-toggle" onclick="toggleDoneApp()"><span>'+(_showDoneApp?'▾':'▸')+'</span> 已处理申请 <span class="dt-cnt">'+done.length+' 条</span></div>';
+    if(_showDoneApp){html+=done.map(a=>appCardHtml(a)).join('');}
+  }
+  box.innerHTML=html;
+}
+function toggleDoneApp(){_showDoneApp=!_showDoneApp;loadApplicants();}
+async function deleteApplicant(aid){
+  try{const r=await runBusy(()=>getJSON('/api/applicant/'+aid+'/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})}));
+    toast(r.message,r.ok?'ok':'err');loadApplicants();}
+  catch(e){toast('删除失败：'+e.message,'err');}
+}
+function toggleAllApp(checked){document.querySelectorAll('.app-cb').forEach(c=>c.checked=checked);}
+function selectedAppIds(){return Array.from(document.querySelectorAll('.app-cb:checked')).map(c=>c.value);}
+async function doApprove(aid){
+  const pw=await showAuditModal('确认通过该申请并写入飞书导师表?');
+  if(pw===null)return;
+  try{const r=await runBusy(()=>getJSON('/api/applicant/'+aid+'/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audit_pw:pw})}));
+    toast(r.message,r.ok?'ok':'err');state.mentorData=null;loadApplicants();}
+  catch(e){toast('审核失败：'+e.message,'err');}
+}
+async function doReject(aid){
+  const pw=await showAuditModal('确认拒绝该申请?');
+  if(pw===null)return;
+  try{const r=await runBusy(()=>getJSON('/api/applicant/'+aid+'/reject',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audit_pw:pw})}));
+    toast(r.message,r.ok?'ok':'err');loadApplicants();}
+  catch(e){toast('失败：'+e.message,'err');}
+}
+async function batchAction(action){
+  const ids=selectedAppIds();
+  if(!ids.length){toast('请先勾选要处理的申请','err');return;}
+  const pw=await showAuditModal('确认批量'+(action==='approve'?'通过':'拒绝')+' '+ids.length+' 条申请?');
+  if(pw===null)return;
+  try{const r=await runBusy(()=>getJSON('/api/applicants/batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ids:ids,action:action,audit_pw:pw})}));
+    toast(r.message,r.ok?'ok':'err');state.mentorData=null;loadApplicants();}
+  catch(e){toast('批量操作失败：'+e.message,'err');}
+}
+/* 二级密码确认 modal */
+let _auditResolve=null;
+function showAuditModal(desc){
+  document.getElementById('audit-desc').textContent=desc;
+  document.getElementById('audit-pw').value='';
+  document.getElementById('audit-err').textContent='';
+  document.getElementById('audit-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('audit-pw').focus(),50);
+  return new Promise(res=>{_auditResolve=res;});
+}
+function closeAuditModal(){document.getElementById('audit-modal').style.display='none';if(_auditResolve){_auditResolve(null);_auditResolve=null;}}
+function confirmAudit(){
+  const pw=document.getElementById('audit-pw').value;
+  if(!pw){document.getElementById('audit-err').textContent='请输入二级密码';return;}
+  document.getElementById('audit-modal').style.display='none';
+  if(_auditResolve){_auditResolve(pw);_auditResolve=null;}
+}
+function submitRecruitForm(e){
+  e.preventDefault();
+  const data={};
+  new FormData(document.getElementById('recruit-form')).forEach((v,k)=>{data[k]=v;});
+  const btn=document.getElementById('recruit-submit');
+  withLoading(btn,'初筛中…',async()=>{
+    try{const r=await getJSON('/api/recruit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});renderRecruitResult(r);}
+    catch(err){toast('提交失败：'+err.message,'err');}
+  });
+}
+function renderRecruitResult(r){
+  const box=document.getElementById('recruit-result');
+  const cfg={pass:{t:'✓ 初筛通过 · 已入库'},review:{t:'⊙ 待人工复核'},reject:{t:'✕ 暂不符合招募标准'}}[r.result]||{t:''};
+  let h=`<div class="rr-card rr-${r.result}"><div class="rr-title">${cfg.t}</div>`;
+  if(r.mentor_id)h+=`<div class="rr-id">导师编号：<b>${r.mentor_id}</b></div>`;
+  if(r.reasons&&r.reasons.length)h+=`<ul class="rr-reasons">${r.reasons.map(x=>`<li>${x}</li>`).join('')}</ul>`;
+  if(r.missing&&r.missing.length)h+=`<div class="rr-missing">请补充：${r.missing.join('、')}</div>`;
+  if(r.result==='pass')h+=`<div class="rr-tip">该导师已进入导师池。返回工作台即可在列表中看到 TA,并可参与匹配。</div>`;
+  h+=`</div>`;
+  box.innerHTML=h;box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function onItemKey(e,mid){if(e.key==="Enter"||e.key===" "){e.preventDefault();openMentorDetail(mid);}}
+
+function stat(num,lbl,unit){return `<div class="stat"><div class="num">${num}</div><div class="lbl">${lbl}${unit?("("+unit+")"):""}</div></div>`;}
+function openMentorDetail(mid){
+  const m=state.mentorById[mid];if(!m)return;
+  const mi=(state.lastMatch&&state.lastMatch.matches.find(x=>x.mentor_id===mid))||null;
+  let h=`<div class="m-head"><div class="m-avatar">${(m.mentor_id||"?").replace(/[^A-Za-z0-9一-龥]/g,"").slice(0,1)||"师"}</div><div class="m-id"><div class="m-name">${m.mentor_id} 导师</div><div class="m-sub muted">${m.gender||"—"} · ${m.industry||"—"} · ${m.city||"—"}</div></div><span class="m-level"><svg class="ic sm" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>${m.level||"—"} ${m.level_name||""}<span class="tip"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="tip-box"><b>导师级别评定标准</b><br><span class="dim">综合评估分 = 服务时长 40% + 服务质量 40% + 深度贡献 20%</span><br>· 服务时长：累计志愿服务小时数<br>· 服务质量：学生反馈平均分（1-10 分）<br>· 深度贡献：拉导师 / 赞助 / 课程开发 / 治理建议<br><span class="dim">L1 新锐｜L2 资深（综合≥60 + 有贡献）｜L3 首席（综合≥80 + 卓越贡献）</span><br><b>退出：两年零服务停牌 / 三年失联或严重投诉移除</b></span></span></span></div>`;
+  h+=`<div class="m-body">`;
+  h+=`<div class="m-sec"><div class="m-label">资质背景</div><div class="m-text">${m.qualification||"—"}${m.school?` · ${m.school}`:""}${m.work_years?` · ${m.work_years} 年经验`:""}${m.company?` · 曾/现就职 ${m.company}`:""}</div>${m.tags&&m.tags.length?`<div class="m-tags">${m.tags.map(t=>`<span class="chip">${t}</span>`).join("")}</div>`:""}</div>`;
+  h+=`<div class="m-sec"><div class="m-label">服务与配对</div><div class="m-stats">${stat(m.total_hours,"服务时长","h")}${stat(m.total_students,"累计学生","人")}${stat((m.current_students+"/"+m.max_students),"已配/可配")}${stat(m.free_slots,"剩余名额")}${stat(m.score,"综合评估","分")}</div></div>`;
+  if(mi){h+=`<div class="m-sec m-match"><div class="m-label">与当前学生匹配度 <span class="m-score" style="color:${scoreColor(mi.scores.total)}">${mi.scores.total.toFixed(2)}</span></div><div class="dims">${dimBars(mi.scores)}</div><div class="reason">💡 ${mi.reason}</div></div>`;}
+  else{h+=`<div class="m-sec"><div class="m-label">与当前学生匹配</div><div class="m-text muted">该导师未进入当前学生的 Top ${state.topN} 命中（可能未通过硬过滤或排名靠后）。可在左上角切换学生、或调整权重后查看匹配度。</div></div>`;}
+  h+=`<div class="m-sec"><div class="m-label">运营编辑 <span class="hint" style="margin-left:6px;font-weight:400;color:var(--muted);">管理员可改,保存即写飞书</span></div><div class="m-edit"><label>可辅导人数<input type="number" min="0" id="ed-max" value="${m.max_students}"></label><label>已配学生<input type="number" min="0" id="ed-cur" value="${m.current_students}"></label><label>年度时长上限(0=不限)<input type="number" min="0" id="ed-cap" value="${m.annual_hour_cap||0}"></label><label>服务状态<select id="ed-status"><option ${m.status==='活跃'?'selected':''}>活跃</option><option ${m.status==='停牌'?'selected':''}>停牌</option><option ${m.status==='移除'?'selected':''}>移除</option></select></label></div>${(m.annual_hour_cap>0&&m.used_hours>m.annual_hour_cap)?'<div class="m-edit-warn">⚠ 该导师已用 '+m.used_hours+'h,超过年度上限 '+m.annual_hour_cap+'h,建议限制排课。</div>':''}<button class="btn small" id="ed-save" onclick="saveMentorEdit('${mid}')">保存修改</button></div>`;
+  h+=`</div>`;
+  {const cs=m.cert_state||'none';
+   const foot=cs==='auto'||cs==='approved'
+     ?`<button class="btn ghost" onclick="openCert('${mid}')"><svg class="ic sm" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg> 荣誉证书${cs==='approved'?' ·已审核':''}</button><button class="btn" onclick="downloadCert('${mid}')"><svg class="ic sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 下载证书</button>`
+     :cs==='pending'
+     ?`<button class="btn" onclick="certApprove('${mid}')"><svg class="ic sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 通过证书审核</button><button class="btn ghost" onclick="openCert('${mid}')">预览(未审核)</button>`
+     :`<button class="btn ghost" onclick="openCert('${mid}')">预览证书</button>`;
+   h+=`<div class="m-foot">${foot}</div>`;}
+  document.getElementById("mentor-detail").innerHTML=h;
+  document.getElementById("mentor-modal").style.display="flex";
+  document.getElementById("mentor-detail").scrollTop=0;}
+function closeMentorDetail(){document.getElementById("mentor-modal").style.display="none";}
+function openCert(mid){document.getElementById("cert-frame").src="/certificate/"+mid;document.getElementById("cert-modal").style.display="flex";}
+function closeCert(){document.getElementById("cert-modal").style.display="none";document.getElementById("cert-frame").src="";}
+async function saveMentorEdit(mid){
+  const btn=document.getElementById('ed-save');if(!btn)return;const orig=btn.innerHTML;btn.disabled=true;btn.textContent='保存中…';
+  const body={max_students:+document.getElementById('ed-max').value,current_students:+document.getElementById('ed-cur').value,annual_hour_cap:+document.getElementById('ed-cap').value,status:document.getElementById('ed-status').value};
+  try{const r=await getJSON('/api/mentor/'+mid,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    toast(r.message,r.ok?'ok':'err');
+    const m=state.mentorById[mid];
+    if(m){m.max_students=body.max_students;m.current_students=body.current_students;m.annual_hour_cap=body.annual_hour_cap;m.status=body.status;}
+    state.mentorData=null;openMentorDetail(mid);
+  }catch(e){toast('保存失败：'+e.message,'err');}
+  finally{if(btn){btn.disabled=false;btn.innerHTML=orig;}}
+}
+async function certApprove(mid){
+  const pw=await showAuditModal('确认通过该导师的证书审核?通过后可生成荣誉证书。');
+  if(pw===null)return;
+  try{const r=await runBusy(()=>getJSON('/api/mentor/'+mid+'/cert/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audit_pw:pw})}));
+    toast(r.message,r.ok?'ok':'err');
+    if(r.ok&&state.mentorById[mid]){state.mentorById[mid].cert_state='approved';}
+    state.mentorData=null;openMentorDetail(mid);
+  }catch(e){toast('失败：'+e.message,'err');}
+}
+async function confirmPair(mid){
+  if(!state.current){toast('请先选择学生','err');return;}
+  try{const r=await runBusy(()=>getJSON('/api/pair',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mentor_id:mid,student_id:state.current})}));
+    toast(r.message,r.ok?'ok':'err');state.mentorData=null;refresh();
+  }catch(e){toast('配对失败：'+e.message,'err');}
+}
+function switchWorkTab(w){
+  document.querySelectorAll('.wtab').forEach(t=>t.classList.toggle('active',t.dataset.w===w));
+  ['match','course','activity'].forEach(x=>{const el=document.getElementById('w-'+x);if(el)el.hidden=(x!==w);});
+  if(w==='course'){fillMSSelects();loadSchedules();}
+  if(w==='activity')loadActivities();
+}
+function fillMSSelects(){
+  const mm=document.getElementById('sc-mentor');
+  if(mm){const keys=Object.keys(state.mentorById).sort();mm.innerHTML=keys.map(k=>'<option>'+k+'</option>').join('');}
+  const ss=document.getElementById('sc-student');
+  if(ss){ss.innerHTML=state.students.map(s=>'<option value="'+s.student_id+'">'+s.student_id+'('+s.grade+'·'+s.region+')</option>').join('');}
+}
+function loadSchedules(){getJSON('/api/schedules').then(r=>renderSchedules(r.schedules||[])).catch(()=>{});}
+function renderSchedules(list){
+  const cnt=document.getElementById('sched-count');if(cnt)cnt.textContent=list.length?('共 '+list.length+' 条'):'';
+  const box=document.getElementById('sched-list');if(!box)return;
+  if(!list.length){box.innerHTML='<div class="empty">暂无课程安排</div>';return;}
+  box.innerHTML=list.map(c=>'<div class="app-card app-pending"><div class="app-head"><b class="app-name">'+(c.time||'—')+'</b> <span class="muted">'+(c.topic||'')+'</span> <span class="chip">'+(c.mode||'线上')+'</span></div><div class="app-meta">导师 '+(c.mentor_id||'—')+' ↔ 学生 '+(c.student_id||'—')+' ｜ '+(c.status||'')+' ｜ '+(c.ts||'')+'</div></div>').join('');
+}
+async function addSchedule(){
+  const data={mentor_id:document.getElementById('sc-mentor').value,student_id:document.getElementById('sc-student').value,time:document.getElementById('sc-time').value.trim().replace('T',' '),topic:document.getElementById('sc-topic').value.trim(),mode:document.getElementById('sc-mode').value};
+  if(!data.time||!data.topic){toast('请填写时间与主题','err');return;}
+  try{const r=await runBusy(()=>getJSON('/api/schedule',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}));
+    toast(r.message,r.ok?'ok':'err');loadSchedules();document.getElementById('sc-time').value='';document.getElementById('sc-topic').value='';}
+  catch(e){toast('失败：'+e.message,'err');}
+}
+function loadActivities(){getJSON('/api/activities').then(r=>renderActivities(r.activities||[])).catch(()=>{});}
+function renderActivities(list){
+  const box=document.getElementById('act-list');if(!box)return;
+  if(!list.length){box.innerHTML='<div class="empty">暂无活动</div>';return;}
+  box.innerHTML=list.map(a=>'<div class="app-card app-approved"><div class="app-head"><b class="app-name">'+(a.title||'')+'</b> <span class="muted">'+(a.time||'')+'</span></div><div class="app-meta">地点：'+(a.location||'—')+' ｜ '+(a.ts||'')+'</div>'+(a.content?'<div class="app-reason">'+a.content+'</div>':'')+'<div class="app-foot"><span class="muted">'+(a.activity_id||'')+'</span><span class="app-actions"><button class="btn ghost small" onclick="deleteActivity(\''+(a.activity_id||'')+'\')">删除</button></span></div></div>').join('');
+}
+async function deleteActivity(aid){
+  try{const r=await runBusy(()=>getJSON('/api/activity/'+aid+'/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})}));
+    toast(r.message,r.ok?'ok':'err');loadActivities();}
+  catch(e){toast('删除失败：'+e.message,'err');}
+}
+async function addActivity(){
+  const data={title:document.getElementById('ac-title').value.trim(),time:document.getElementById('ac-time').value.trim().replace('T',' '),location:document.getElementById('ac-loc').value.trim(),content:document.getElementById('ac-content').value.trim()};
+  if(!data.title||!data.time){toast('请填写标题与时间','err');return;}
+  try{const r=await runBusy(()=>getJSON('/api/activity',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}));
+    toast(r.message,r.ok?'ok':'err');loadActivities();['ac-title','ac-time','ac-loc','ac-content'].forEach(id=>document.getElementById(id).value='');}
+  catch(e){toast('失败：'+e.message,'err');}
+}
+async function changePassword(){
+  const cur=document.getElementById('pw-current').value;
+  const pw=document.getElementById('pw-new').value;
+  const au=document.getElementById('pw-new-audit').value;
+  if(!cur){toast('请输入当前密码','err');return;}
+  if(!pw&&!au){toast('请至少填写一项新密码','err');return;}
+  try{const r=await getJSON('/api/admin/password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({current:cur,password:pw,audit_password:au})});
+    toast(r.message,r.ok?'ok':'err');
+    if(r.ok){['pw-current','pw-new','pw-new-audit'].forEach(id=>document.getElementById(id).value='');}
+  }catch(e){toast('保存失败：'+e.message,'err');}
+}
+function downloadCert(mid){const a=document.createElement('a');a.href="/certificate/"+mid;a.download="荣誉证书_"+mid+".html";document.body.appendChild(a);a.click();a.remove();toast("已开始下载证书，可本地打开或打印为 PDF。","ok");}
+
+async function fetchMatch(){if(!state.current)return;const data=await getJSON("/api/match",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({student_id:state.current,weights:state.weights,top_n:state.topN})});state.lastMatch=data;}
+async function ensureMentors(){if(state.mentorData&&state.mentorData.source===state.source)return;const r=await getJSON("/api/mentors");state.mentorData=r;state.mentorById={};r.mentors.forEach(m=>state.mentorById[m.mentor_id]=m);state.filters={levels:[],industry:"",city:"",tag:"",onlyFree:false};document.getElementById('fb-free').checked=false;buildFilterOptions();}
+async function refresh(){if(!state.current)return;try{await Promise.all([fetchMatch(),ensureMentors()]);renderUnified();}catch(e){document.getElementById("results").innerHTML=`<div class="empty">出错了：${e.message}</div>`;}}
+
+function updateBadges(){document.getElementById("data-badge").textContent={local:"数据：本地 mock",feishu:"数据：飞书实时",imported:"数据：导入文件"}[state.source]||"数据：—";
+  document.getElementById("src-info").textContent=`当前：${state.students.length} 位学生可选`;}
+function renderFeishu(st){const b=document.getElementById("feishu-badge");
+  if(st.configured&&st.installed){b.textContent="飞书：已连接";b.className="badge ok";}else{b.textContent="飞书：未连接";b.className="badge warn";}
+  document.getElementById("fs-msg").textContent=st.message;}
+
+function applyData(r){state.source=r.source;state.students=r.students||[];state.mentorData=null;
+  const radio=document.querySelector(`input[name=src][value="${r.source}"]`);if(radio)radio.checked=true;
+  document.getElementById("imp-info").textContent=state.source==="imported"?`导入数据在使用（${state.imported.mentors} 导师 / ${state.imported.students} 学生）`:`导入缓存：${state.imported.mentors} 导师 / ${state.imported.students} 学生`;
+  renderStudentSelect();updateBadges();refresh();}
+
+async function switchSource(src){const btn=document.getElementById("refresh-btn");
+  await withLoading(btn,"切换中…",async()=>{
+    try{const r=await getJSON("/api/source",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({source:src})});
+      toast(r.message,r.ok?"ok":"err");if(r.ok){applyData(r);showView("work");}}catch(e){toast("切换失败："+e.message,"err");}});}
+async function uploadImport(kind,file){const fd=new FormData();fd.append("type",kind);fd.append("file",file);toast("正在导入…");
+  try{const r=await (await fetch("/api/import",{method:"POST",body:fd})).json();
+    toast(r.message,r.ok?"ok":"err");if(r.ok){state.imported=r.counts;applyData(r);showView("work");}}catch(e){toast("导入失败："+e.message,"err");}}
+
+async function doWriteFeishu(btn){btn=btn||document.getElementById("write-feishu");
+  await withLoading(btn,"导出中…",async()=>{try{
+    const r=await getJSON("/api/feishu/write",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({student_id:state.current,weights:state.weights,top_n:state.topN})});toast(r.message,r.ok?"ok":"err");
+    const link=document.getElementById("last-match-link");
+    if(r.ok&&r.url){link.href=r.url;link.style.display="inline-block";}else{link.style.display="none";}}
+  catch(e){toast("导出失败："+e.message,"err");}});}
+
+async function init(){try{
+  const [d,c,mm]=await Promise.all([getJSON("/api/data"),getJSON("/api/config"),getJSON("/api/mentors")]);
+  state.students=d.students;state.source=d.source;
+  state.defaultWeights=Object.assign({},c.weights);state.weights=Object.assign({},c.weights);
+  state.dimOrder=c.dim_order;state.dimLabels=c.dim_labels;state.topN=c.top_n;
+  state.imported=c.imported_counts||{mentors:0,students:0};
+  state.mentorData=mm;state.mentorById={};mm.mentors.forEach(m=>state.mentorById[m.mentor_id]=m);
+  const r0=document.querySelector(`input[name=src][value="${state.source}"]`);if(r0)r0.checked=true;
+  document.querySelectorAll("input[name=src]").forEach(el=>el.addEventListener("change",()=>switchSource(el.value)));
+  document.getElementById("refresh-btn").addEventListener("click",()=>switchSource(state.source));
+  document.getElementById("imp-mentor").addEventListener("change",e=>{if(e.target.files[0])uploadImport("mentor",e.target.files[0]);});
+  document.getElementById("imp-student").addEventListener("change",e=>{if(e.target.files[0])uploadImport("student",e.target.files[0]);});
+  document.getElementById("student-select").addEventListener("change",e=>{state.current=e.target.value;refresh();});
+  document.getElementById("topn-select").addEventListener("change",e=>{state.topN=parseInt(e.target.value,10);refresh();});
+  document.getElementById("reset-weights").addEventListener("click",resetWeights);
+  document.getElementById("write-feishu").addEventListener("click",()=>doWriteFeishu(document.getElementById("write-feishu")));
+  document.getElementById("fs-test").addEventListener("click",function(){const btn=this;withLoading(btn,"测试中…",async()=>{try{const r=await getJSON("/api/feishu/test",{method:"POST"});toast(r.message,r.ok?"ok":"err");}catch(e){toast("测试失败："+e.message,"err");}});});
+  document.getElementById("nav-toggle").addEventListener("click",()=>showView(curView==="work"?"settings":"work"));
+  document.getElementById("back-work2").addEventListener("click",()=>showView("work"));
+  document.getElementById("recruit-form").addEventListener("submit",submitRecruitForm);
+  document.getElementById("recruit-reset").addEventListener("click",()=>{document.getElementById('recruit-form').reset();document.getElementById('recruit-result').innerHTML='';});
+  document.getElementById("back-work").addEventListener("click",()=>showView("work"));
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(document.getElementById("cert-modal").style.display==="flex")closeCert();else if(document.getElementById("mentor-modal").style.display==="flex")closeMentorDetail();else if(curView!=="work")showView("work");}});
+  document.getElementById("fb-industry").addEventListener("change",e=>{state.filters.industry=e.target.value;renderUnified();});
+  document.getElementById("fb-city").addEventListener("change",e=>{state.filters.city=e.target.value;renderUnified();});
+  document.getElementById("fb-tag").addEventListener("change",e=>{state.filters.tag=e.target.value;renderUnified();});
+  document.getElementById("fb-free").addEventListener("change",e=>{state.filters.onlyFree=e.target.checked;renderUnified();});
+  document.getElementById("fb-clear").addEventListener("click",clearFilters);
+  buildFilterOptions();
+  buildPresets();buildSliders();refreshPresetActive();updateBadges();renderFeishu(c.feishu);
+  renderStudentSelect();state.current=state.students[0]&&state.students[0].student_id;refresh();
+  document.getElementById("audit-ok").addEventListener("click",confirmAudit);
+  document.getElementById("audit-pw").addEventListener("keydown",e=>{if(e.key==="Enter")confirmAudit();});
+  loadApplicants();
+  document.querySelectorAll('.wtab').forEach(t=>t.addEventListener('click',()=>switchWorkTab(t.dataset.w)));
+  document.getElementById('sc-add').addEventListener('click',addSchedule);
+  document.getElementById('ac-add').addEventListener('click',addActivity);
+  document.getElementById('pw-save').addEventListener('click',changePassword);
+}catch(e){document.getElementById("results").innerHTML=`<div class="empty">初始化失败：${e.message}</div>`;}}
+init();
+</script>
+</body>
+</html>

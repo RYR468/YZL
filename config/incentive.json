@@ -1,0 +1,8 @@
+{
+  "_说明": "导师发展与赋能体系评估规则。综合评估分 = 服务时长40% + 服务质量40% + 深度贡献20%；级别 L1新锐/L2资深/L3首席。详见 docs/incentive_design.md。",
+  "weights": {"hours": 0.4, "quality": 0.4, "contribution": 0.2},
+  "full_scale": {"hours": 200, "rating": 10, "org": 50},
+  "level_thresholds": {"L3_score": 80, "L3_org": 30, "L2_score": 60},
+  "level_names": {"L1": "新锐导师", "L2": "资深导师", "L3": "首席导师"},
+  "_org_说明": "org_score 是运营登记的深度贡献累计分。参考计分：拉新导师+10、企业赞助+30、课程开发或治理建议+15。"
+}

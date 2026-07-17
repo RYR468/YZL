@@ -1,0 +1,54 @@
+[
+  {
+    "student_id": "S001", "grade": "高一", "region": "四川县城", "gender": "女",
+    "interested_fields": ["互联网", "科技"], "needs": ["职业发展"], "personality": "内向",
+    "prefer_same_gender": false, "prefer_same_region": false, "urgency": 2,
+    "feishu_mobile": "13800100000"
+  },
+  {
+    "student_id": "S002", "grade": "高二", "region": "河南农村", "gender": "男",
+    "interested_fields": ["金融"], "needs": ["职业发展", "学业指导"], "personality": "外向",
+    "prefer_same_gender": false, "prefer_same_region": false, "urgency": 1
+  },
+  {
+    "student_id": "S003", "grade": "初三", "region": "甘肃", "gender": "女",
+    "interested_fields": ["医学", "医疗"], "needs": ["心理", "学业指导"], "personality": "内向",
+    "prefer_same_gender": true, "prefer_same_region": false, "urgency": 3,
+    "feishu_mobile": "13800100000"
+  },
+  {
+    "student_id": "S004", "grade": "高一", "region": "贵州山区", "gender": "男",
+    "interested_fields": ["科技"], "needs": ["三观树立"], "personality": "内向",
+    "prefer_same_gender": false, "prefer_same_region": false, "urgency": 1
+  },
+  {
+    "student_id": "S005", "grade": "高二", "region": "江西县城", "gender": "女",
+    "interested_fields": ["教育", "升学"], "needs": ["学业指导"], "personality": "外向",
+    "prefer_same_gender": false, "prefer_same_region": true, "urgency": 2
+  },
+  {
+    "student_id": "S006", "grade": "高一", "region": "安徽农村", "gender": "男",
+    "interested_fields": ["科技", "软件"], "needs": ["职业发展"], "personality": "内向",
+    "prefer_same_gender": false, "prefer_same_region": false, "urgency": 2
+  },
+  {
+    "student_id": "S007", "grade": "初三", "region": "云南山区", "gender": "女",
+    "interested_fields": ["心理"], "needs": ["心理"], "personality": "内向",
+    "prefer_same_gender": true, "prefer_same_region": false, "urgency": 3
+  },
+  {
+    "student_id": "S008", "grade": "高二", "region": "湖南县城", "gender": "男",
+    "interested_fields": ["法律"], "needs": ["职业发展"], "personality": "外向",
+    "prefer_same_gender": false, "prefer_same_region": false, "urgency": 2
+  },
+  {
+    "student_id": "S009", "grade": "高一", "region": "广西农村", "gender": "女",
+    "interested_fields": ["文化传媒"], "needs": ["三观树立"], "personality": "外向",
+    "prefer_same_gender": false, "prefer_same_region": false, "urgency": 1
+  },
+  {
+    "student_id": "S010", "grade": "高二", "region": "四川", "gender": "男",
+    "interested_fields": ["金融", "投资"], "needs": ["学业指导"], "personality": "外向",
+    "prefer_same_gender": false, "prefer_same_region": false, "urgency": 2
+  }
+]

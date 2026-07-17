@@ -1,0 +1,122 @@
+[
+  {
+    "mentor_id": "M001", "gender": "男", "city": "上海", "industry": "互联网",
+    "expertise": ["互联网", "产品"], "expected_regions": [], "expected_gender": "",
+    "monthly_hours": 8, "max_students": 3,
+    "teach_topics": ["大学生职场发展规划", "面试技巧", "商务礼仪"],
+    "service_types": ["线上沟通", "线下活动"],
+    "tags": ["外向", "互联网产品", "擅长职场规划"],
+    "current_students": 1, "used_hours": 30,
+    "total_hours": 150, "total_students": 9, "rating": 9.2, "org_score": 18, "star": 2,
+    "qualification": "世界500强中高层", "school": "复旦大学", "work_years": 8,
+    "company": "某头部互联网公司", "status": "活跃", "feishu_mobile": "13800100000"
+  },
+  {
+    "mentor_id": "M002", "gender": "女", "city": "北京", "industry": "金融",
+    "expertise": ["金融", "投资"], "expected_regions": [], "expected_gender": "",
+    "monthly_hours": 6, "max_students": 2,
+    "teach_topics": ["金融行业入门", "财商教育", "升学规划"],
+    "service_types": ["线上沟通", "电话回访"],
+    "tags": ["金融", "升学", "耐心"],
+    "current_students": 0, "used_hours": 5,
+    "total_hours": 40, "total_students": 3, "rating": 8.0, "org_score": 0, "star": 0,
+    "qualification": "世界500强中高层", "school": "清华大学", "work_years": 10,
+    "company": "某金融机构", "status": "活跃"
+  },
+  {
+    "mentor_id": "M003", "gender": "男", "city": "广州", "industry": "医疗",
+    "expertise": ["医疗", "医学"], "expected_regions": [], "expected_gender": "",
+    "monthly_hours": 5, "max_students": 2,
+    "teach_topics": ["医学专业介绍", "学业规划", "心理减压"],
+    "service_types": ["线上沟通", "线下活动", "公益营授课"],
+    "tags": ["医疗", "耐心", "资深"],
+    "current_students": 2, "used_hours": 40,
+    "total_hours": 210, "total_students": 14, "rating": 9.8, "org_score": 42, "star": 3,
+    "qualification": "全球前100强毕业", "school": "上海交通大学", "work_years": 14,
+    "company": "某三甲医院", "status": "活跃", "feishu_mobile": "13800100000"
+  },
+  {
+    "mentor_id": "M004", "gender": "女", "city": "上海", "industry": "教育",
+    "expertise": ["教育", "升学"], "expected_regions": [], "expected_gender": "",
+    "monthly_hours": 10, "max_students": 3,
+    "teach_topics": ["升学规划", "学习方法", "价值观引导"],
+    "service_types": ["线下活动", "公益营授课"],
+    "tags": ["教育", "价值观", "亲和"],
+    "current_students": 1, "used_hours": 20,
+    "total_hours": 120, "total_students": 8, "rating": 9.0, "org_score": 12, "star": 2,
+    "qualification": "全球前100强毕业", "school": "北京师范大学", "work_years": 12,
+    "company": "某重点中学", "status": "活跃"
+  },
+  {
+    "mentor_id": "M005", "gender": "男", "city": "深圳", "industry": "科技",
+    "expertise": ["科技", "软件"], "expected_regions": ["广东"], "expected_gender": "",
+    "monthly_hours": 6, "max_students": 2,
+    "teach_topics": ["程序员职业发展", "技术入门", "面试"],
+    "service_types": ["线上沟通"],
+    "tags": ["内向", "科技", "技术"],
+    "current_students": 0, "used_hours": 4,
+    "total_hours": 30, "total_students": 2, "rating": 7.5, "org_score": 0, "star": 0,
+    "qualification": "优秀创业者", "school": "浙江大学", "work_years": 5,
+    "company": "某初创科技公司", "status": "活跃"
+  },
+  {
+    "mentor_id": "M006", "gender": "女", "city": "杭州", "industry": "文化传媒",
+    "expertise": ["传媒", "写作"], "expected_regions": [], "expected_gender": "",
+    "monthly_hours": 7, "max_students": 3,
+    "teach_topics": ["表达与沟通", "写作提升", "价值观引导"],
+    "service_types": ["线上沟通", "线下活动"],
+    "tags": ["传媒", "外向", "表达力"],
+    "current_students": 1, "used_hours": 8,
+    "total_hours": 50, "total_students": 4, "rating": 8.0, "org_score": 0, "star": 0,
+    "qualification": "世界500强中高层", "school": "中国传媒大学", "work_years": 9,
+    "company": "某文化传媒集团", "status": "活跃"
+  },
+  {
+    "mentor_id": "M007", "gender": "男", "city": "成都", "industry": "互联网",
+    "expertise": ["互联网", "产品"], "expected_regions": ["西部", "四川"], "expected_gender": "",
+    "monthly_hours": 8, "max_students": 3,
+    "teach_topics": ["职场发展规划", "面试技巧", "行业入门"],
+    "service_types": ["线上沟通", "线下活动"],
+    "tags": ["外向", "互联网产品", "资深"],
+    "current_students": 2, "used_hours": 60,
+    "total_hours": 200, "total_students": 16, "rating": 9.6, "org_score": 50, "star": 3,
+    "qualification": "世界500强中高层", "school": "四川大学", "work_years": 12,
+    "company": "某头部互联网公司", "status": "活跃", "feishu_mobile": "13800100000"
+  },
+  {
+    "mentor_id": "M008", "gender": "男", "city": "北京", "industry": "法律",
+    "expertise": ["法律", "合规"], "expected_regions": [], "expected_gender": "",
+    "monthly_hours": 6, "max_students": 3,
+    "teach_topics": ["法律职业规划", "逻辑思维", "商务礼仪"],
+    "service_types": ["线上沟通", "线下活动", "公益营授课"],
+    "tags": ["法律", "严谨", "资深"],
+    "current_students": 1, "used_hours": 35,
+    "total_hours": 180, "total_students": 12, "rating": 9.5, "org_score": 35, "star": 3,
+    "qualification": "世界500强中高层", "school": "中国政法大学", "work_years": 15,
+    "company": "某知名律所", "status": "活跃", "feishu_mobile": "13800100000"
+  },
+  {
+    "mentor_id": "M009", "gender": "女", "city": "上海", "industry": "公益营",
+    "expertise": ["综合辅导", "成长陪伴"], "expected_regions": [], "expected_gender": "",
+    "monthly_hours": 12, "max_students": 2,
+    "teach_topics": ["生涯启蒙", "价值观引导", "学习方法"],
+    "service_types": ["线下活动", "公益营授课"],
+    "tags": ["公益", "亲和", "耐心"],
+    "current_students": 0, "used_hours": 10,
+    "total_hours": 60, "total_students": 5, "rating": 8.5, "org_score": 0, "star": 0,
+    "qualification": "全球前100强毕业", "school": "南京大学", "work_years": 7,
+    "company": "某公益基金会", "status": "活跃"
+  },
+  {
+    "mentor_id": "M010", "gender": "女", "city": "广州", "industry": "心理",
+    "expertise": ["心理", "教育"], "expected_regions": [], "expected_gender": "",
+    "monthly_hours": 7, "max_students": 3,
+    "teach_topics": ["心理疏导", "情绪管理", "学业减压"],
+    "service_types": ["线上沟通", "电话回访", "公益营授课"],
+    "tags": ["心理", "耐心", "外向"],
+    "current_students": 1, "used_hours": 18,
+    "total_hours": 100, "total_students": 7, "rating": 9.0, "org_score": 10, "star": 2,
+    "qualification": "全球前100强毕业", "school": "华东师范大学", "work_years": 8,
+    "company": "某心理咨询机构", "status": "活跃"
+  }
+]

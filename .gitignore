@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# 虚拟环境
+.venv/
+venv/
+
+# 敏感配置（飞书凭证等，切勿提交）
+config/feishu.json
+config/admin.json
+.env
+.env.*
+
+# 运行产物
+matches_output.json
+*.log
+
+# 飞书真实数据快照（sync_feishu_local.py 生成，含真实导师画像/行业/城市，勿提交）
+data/real_*.json
+
+# 运行时数据（配对/课程/活动/报名，部署后在持久卷生成，不入库）
+data/applicants.json
+data/pairs.json
+data/schedules.json
+data/activities.json

@@ -1,0 +1,9 @@
+{
+  "_说明": "匹配各维度权重，运营/老师可调；运行时会按总和归一化，不严格要求合计=1。维度逻辑见 matching/dimensions.py",
+  "industry": 0.35,
+  "need": 0.25,
+  "service": 0.15,
+  "region": 0.15,
+  "personality": 0.05,
+  "profile": 0.05
+}

@@ -1,0 +1,8 @@
+{
+  "_说明": "硬过滤：不达标的导师直接剔除，不进入打分。require_qualification=导师须满足招募条件(资质非空)，默认关(避免飞书导师无该列时被误剔除)，招募入库时开启。",
+  "capacity": true,
+  "same_gender": true,
+  "same_region": true,
+  "min_need_coverage": 1,
+  "require_qualification": false
+}
