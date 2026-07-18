@@ -383,6 +383,12 @@
         <button type="button" class="btn small" id="sc-add">+ 安排并通知师生</button>
         <div id="sched-list" style="margin-top:14px;"></div>
       </div>
+
+      <div class="panel">
+        <h2><svg class="ic" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v-2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> 配对管理 <span class="hint" id="pair-count"></span></h2>
+        <div class="recruit-hint" style="font-size:12.5px;color:var(--muted);background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:9px 12px;margin-bottom:6px;">「取消配对」释放导师名额可重新匹配;「标记完成」表示辅导结束(保留记录)。</div>
+        <div id="pair-list"></div>
+      </div>
     </div>
 
     <div id="w-activity" hidden>
@@ -826,7 +832,32 @@ async function confirmPair(mid){
     state.mentorData=null;refresh();
   }catch(e){toast('配对失败：'+e.message,'err');}
 }
-function loadPairs(){getJSON('/api/pairs').then(r=>{state.pairs=r.pairs||[];if(state.lastMatch)renderUnified();}).catch(()=>{});}
+function loadPairs(){getJSON('/api/pairs').then(r=>{state.pairs=r.pairs||[];if(state.lastMatch)renderUnified();renderPairs();}).catch(()=>{});}
+function renderPairs(){
+  const box=document.getElementById('pair-list');if(!box)return;
+  const list=state.pairs||[];
+  const cnt=document.getElementById('pair-count');if(cnt)cnt.textContent=list.length?('共 '+list.length+' 对'):'';
+  if(!list.length){box.innerHTML='<div class="empty">暂无配对。在「导师匹配」页正式配对后会出现在这里。</div>';return;}
+  box.innerHTML=list.map(p=>{
+    const done=p.status==='已完成';
+    const chip=done?'<span class="chip" style="background:#e8f5e9;color:#2e7d32;">已完成</span>':'<span class="chip warn">配对中</span>';
+    const btns=done
+      ?'<button class="btn ghost small" onclick="cancelPair(\''+p.pair_id+'\')">删除记录</button>'
+      :'<button class="btn small" onclick="completePair(\''+p.pair_id+'\')">标记完成</button><button class="btn ghost small" onclick="cancelPair(\''+p.pair_id+'\')">取消配对</button>';
+    return '<div class="app-card '+(done?'app-approved':'app-pending')+'"><div class="app-head"><b class="app-name">'+p.mentor_id+' ↔ '+p.student_id+'</b> '+chip+'</div><div class="app-meta">编号 '+p.pair_id+' ｜ '+(p.ts||'')+'</div><div class="app-foot"><span class="muted">'+(p.status||'')+'</span><span class="app-actions">'+btns+'</span></div></div>';
+  }).join('');
+}
+async function cancelPair(pid){
+  if(!confirm('确认取消配对 '+pid+'?将释放导师名额,可重新匹配。'))return;
+  try{const r=await runBusy(()=>getJSON('/api/pair/'+pid+'/cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}));
+    toast(r.message,r.ok?'ok':'err');loadPairs();}
+  catch(e){toast('取消失败：'+e.message,'err');}
+}
+async function completePair(pid){
+  try{const r=await runBusy(()=>getJSON('/api/pair/'+pid+'/complete',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}));
+    toast(r.message,r.ok?'ok':'err');loadPairs();}
+  catch(e){toast('操作失败：'+e.message,'err');}
+}
 function showPairSuccess(mid,sid,pid){
   const m=state.mentorById[mid]||{};
   const em=document.getElementById('ps-mentor');if(em)em.textContent=mid+(m.level?(' · '+m.level+' '+(m.level_name||'')):'');
@@ -838,7 +869,7 @@ function closePairSuccess(){const md=document.getElementById('pair-success-modal
 function switchWorkTab(w){
   document.querySelectorAll('.wtab').forEach(t=>t.classList.toggle('active',t.dataset.w===w));
   ['match','course','activity'].forEach(x=>{const el=document.getElementById('w-'+x);if(el)el.hidden=(x!==w);});
-  if(w==='course'){fillMSSelects();loadSchedules();}
+  if(w==='course'){fillMSSelects();loadSchedules();renderPairs();}
   if(w==='activity')loadActivities();
 }
 function fillMSSelects(){

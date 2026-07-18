@@ -786,6 +786,33 @@ def api_pairs():
     return jsonify({"pairs": _load_pairs()})
 
 
+@app.route("/api/pair/<pid>/cancel", methods=["POST"])
+def pair_cancel(pid):
+    """取消配对:删除该配对 + 导师容量 -1(释放名额,可重新配对)。"""
+    rows = _load_pairs()
+    p = next((x for x in rows if x.get("pair_id") == pid), None)
+    if not p:
+        return jsonify({"ok": False, "message": "配对不存在"}), 404
+    rows = [x for x in rows if x.get("pair_id") != pid]
+    _save_pairs(rows)
+    m = next((x for x in current()["mentors"] if x.mentor_id == p["mentor_id"]), None)
+    if m and m.current_students > 0:
+        m.current_students -= 1
+    return jsonify({"ok": True, "message": "已取消配对 %s ↔ %s,导师名额已释放" % (p["mentor_id"], p["student_id"])})
+
+
+@app.route("/api/pair/<pid>/complete", methods=["POST"])
+def pair_complete(pid):
+    """标记配对已完成(保留记录)。"""
+    rows = _load_pairs()
+    p = next((x for x in rows if x.get("pair_id") == pid), None)
+    if not p:
+        return jsonify({"ok": False, "message": "配对不存在"}), 404
+    p["status"] = "已完成"
+    _save_pairs(rows)
+    return jsonify({"ok": True, "message": "已标记 %s ↔ %s 完成" % (p["mentor_id"], p["student_id"])})
+
+
 @app.route("/api/schedules")
 def api_schedules():
     return jsonify({"schedules": _load_schedules()})
