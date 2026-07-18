@@ -12,6 +12,7 @@ config/feishu.json
 config/admin.json
 .env
 .env.*
+!.env.example
 
 # 运行产物
 matches_output.json

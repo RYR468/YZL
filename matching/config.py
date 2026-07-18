@@ -17,6 +17,8 @@ def load_config(name: str, config_dir: str) -> dict:
                 return _strip(yaml.safe_load(f))
         except ImportError:
             pass  # 未装 pyyaml，回退到 json
+    if not os.path.exists(json_path):
+        return {}
     with open(json_path, encoding="utf-8") as f:
         return _strip(json.load(f))
 

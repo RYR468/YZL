@@ -66,6 +66,8 @@
   </div>
   <div class="hint">招募硬标准:全球 <b>Top100 院校</b>毕业 <b>或</b> 世界<b>500强</b>中高层 <b>或</b> 优秀创业者。带 <span style="color:var(--bad)">*</span> 为必填;「资质类型 / 毕业院校」至少填一项用于初筛。</div>
   <form id="rf" class="form">
+    <!-- 蜜罐字段:真人看不见(移出屏幕),机器人会自动填写,后端检测到即静默丢弃 -->
+    <div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true"><label>网站(请勿填写)</label><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
     <fieldset>
       <legend><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M3 21v-1a6 6 0 0 1 12 0v1"/></svg> 基本信息</legend>
       <div class="grid">

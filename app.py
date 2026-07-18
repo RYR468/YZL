@@ -23,7 +23,16 @@ try:
 except Exception:
     pass
 
+import secrets
+import time
 from flask import Flask, request, jsonify, render_template, send_file, session, redirect
+
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    _HAS_LIMITER = True
+except ImportError:
+    _HAS_LIMITER = False
 
 from matching.config import load_config
 from matching.loader import LocalLoader, FeishuLoader, mentor_from_cn, student_from_cn
@@ -40,11 +49,52 @@ CONFIG_DIR = os.path.join(HERE, "config")
 DATA_DIR = os.path.join(HERE, "data")
 
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY") or "yizhiling-session-2026"
+app.secret_key = os.getenv("SECRET_KEY") or secrets.token_hex(32)  # 无 env 则每次启动随机(安全;重启 session 失效)
 
-# ---- 管理端登录(单一密码)----  优先环境变量(部署),其次 config/admin.json(本地开发)
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD") or (load_config("admin", CONFIG_DIR) or {}).get("password") or "admin"
-AUDIT_PASSWORD = os.getenv("AUDIT_PASSWORD") or (load_config("admin", CONFIG_DIR) or {}).get("audit_password") or ADMIN_PASSWORD
+# 频率限制(防刷)。未装 flask-limiter 时降级为无限制,不阻断启动。
+if _HAS_LIMITER:
+    limiter = Limiter(key_func=get_remote_address, app=app, default_limits=[])
+
+    def rate_limit(limit_str):
+        return limiter.limit(limit_str)
+
+    def _client_ip():
+        return get_remote_address()
+else:
+
+    def rate_limit(limit_str):
+        return (lambda f: f)
+
+    def _client_ip():
+        return request.remote_addr or "unknown"
+
+# 登录失败锁定(内存,按 IP:连续 5 次错锁 15 分钟)
+_LOGIN_FAILS = {}
+
+def _check_login_lock(ip):
+    rec = _LOGIN_FAILS.get(ip)
+    if rec and rec[1] > time.time():
+        return rec[1] - time.time()
+    return 0
+
+def _record_login_fail(ip):
+    rec = _LOGIN_FAILS.get(ip, [0, 0])
+    rec[0] += 1
+    if rec[0] >= 5:
+        rec[1] = time.time() + 900
+        rec[0] = 0
+    _LOGIN_FAILS[ip] = rec
+
+def _clear_login_fails(ip):
+    _LOGIN_FAILS.pop(ip, None)
+
+# ---- 管理端登录密码 / 二级密码 ----  优先环境变量(部署),其次 config/admin.json(本地开发);两者都没有则拒绝启动
+_admin_cfg = load_config("admin", CONFIG_DIR) or {}
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD") or _admin_cfg.get("password")
+AUDIT_PASSWORD = os.getenv("AUDIT_PASSWORD") or _admin_cfg.get("audit_password") or ADMIN_PASSWORD
+if not ADMIN_PASSWORD:
+    print("❌ 未配置 ADMIN_PASSWORD(设环境变量或 config/admin.json),拒绝启动。", file=sys.stderr)
+    sys.exit(1)
 PUBLIC_PATHS = {"/login", "/logout", "/recruit", "/api/recruit"}
 
 
@@ -60,13 +110,20 @@ def _gate():
 
 
 @app.route("/login", methods=["GET", "POST"])
+@rate_limit("5/minute")
 def login():
     if request.method == "POST":
+        ip = _client_ip()
+        remain = _check_login_lock(ip)
+        if remain > 0:
+            return jsonify({"ok": False, "message": "尝试过多已锁定,请 %d 分钟后再试" % int(remain / 60 + 1)}), 429
         pwd = ((request.get_json(silent=True) or {}).get("password")
                or request.form.get("password", ""))
         if pwd == ADMIN_PASSWORD:
+            _clear_login_fails(ip)
             session["admin"] = True
             return jsonify({"ok": True})
+        _record_login_fail(ip)
         return jsonify({"ok": False, "message": "密码错误"}), 401
     return render_template("login.html")
 
@@ -560,9 +617,15 @@ def recruit_page():
 
 
 @app.route("/api/recruit", methods=["POST"])
+@rate_limit("3/minute")
 def api_recruit():
     """导师报名 → 规则初筛 → 进待审核池(不自动入名单;管理员审核通过才写飞书导师表)。"""
     form = request.get_json(silent=True) or {}
+    # 蜜罐:隐藏字段 website 真人不会填,机器人会填 → 静默丢弃(返回 ok 但不入库,不暴露已识别)
+    if form.get("website"):
+        return jsonify({"ok": True, "result": "review", "reasons": [], "missing": [],
+                        "mentor_id": "R0000", "status": "pending",
+                        "note": "报名已提交,等待管理员复核。", "notify": ""})
     rows = _load_applicants()
     seq = len(rows) + 1
     scr = recruit_screen(form)
